@@ -520,14 +520,272 @@ function ClassifierTab({ onTeamClick }) {
   );
 }
 
+// ── Glossary Tab ──────────────────────────────────────────────────────────────
+function GlossaryTab() {
+  const ARCHETYPES_FULL = [
+    { id:"two_way_machine",     color:"#1a6b3a", name:"Two-Way Machine",     thresh:"AdjO ≥ 7.0 AND AdjD ≥ 7.0", desc:"Elite on both ends with no exploitable weakness. These teams win with margin — they score efficiently and make every possession a grind on defense. Blue-blood tournament profile. Historically the most reliable Final Four archetype.", examples:"Duke, Michigan, Arizona, Florida, Houston, Iowa State, Michigan State" },
+    { id:"offensive_juggernaut",color:"#c2410c", name:"Offensive Juggernaut",thresh:"AdjO ≥ 8.0, AdjD < 7.0",   desc:"Among the most historically elite offenses in the field. Scores from everywhere — threes, free throws, post-ups, transition. Defense is secondary but good enough not to give games away. Can torch any team on a given night but vulnerable when shots don't fall and defense gets exposed.", examples:"Illinois, Purdue, Arkansas, Alabama, Vanderbilt" },
+    { id:"defensive_fortress",  color:"#0d3b6e", name:"Defensive Fortress",  thresh:"AdjD ≥ 6.5, AdjO < 7.0",  desc:"Suffocating defense built on rim protection, arc lockdown, or pressure. Every game becomes a low-scoring grind. Wins by limiting opponents' best weapons and forcing bad shots. Tournament upsets often come from mid-major Fortresses who slow the game to a crawl.", examples:"UConn, Michigan State, Kansas, Virginia, Nebraska, Gonzaga, Tennessee" },
+    { id:"gunslinger",          color:"#7c3aed", name:"Gunslinger",           thresh:"3PT ≥ 6.0 AND FTG ≥ 7.0", desc:"Attacks from the arc AND draws fouls relentlessly, forcing the defense to make an impossible choice: play tight and give up free throws, or sag and give up threes. Rare and dangerous. The combination of both offensive weapons makes them uniquely hard to game-plan against.", examples:"VCU, Miami (Ohio)" },
+    { id:"sniper_system",       color:"#0891b2", name:"Sniper System",        thresh:"3PT ≥ 6.5, FTG < 7.0",    desc:"Team identity is the three-pointer — high volume AND high efficiency. Lives and dies by the arc. In a hot shooting game, can beat anyone. Cold shooting nights are existential. Watch their 3P% variance; consistent snipers are scarier than streaky ones.", examples:"Louisville, Texas Tech, Wisconsin, Saint Louis, NC State, Akron" },
+    { id:"system_operator",     color:"#475569", name:"System Operator",      thresh:"Catch-all",                desc:"Doesn't have a single dominant statistical identity but wins through execution, discipline, and coaching. Low turnovers, efficient half-court offense, hard to put away. Often underrated in bracket analysis. Many mid-major upsets come from System Operators who slow the game down and don't beat themselves.", examples:"UCLA, Ohio State, Georgia, BYU, Gonzaga, Clemson, Santa Clara" },
+  ];
+
+  const ATTRS_FULL = [
+    {
+      short: "3PT",
+      label: "3-Point Prowess",
+      source: "KenPom",
+      formula: "Average of normalized 3P% and normalized 3PAr",
+      range: "3P%: 30.4–40.5% · 3PAr: 26.8–53.7%",
+      direction: "Higher = better",
+      why: "Combines shooting efficiency (3P%) with shot selection volume (3PAr — the share of all shots that are threes). A team scoring 8.0+ here shoots well from deep and hunts the three consistently. Separated from FTG to isolate the pure 3-point identity.",
+    },
+    {
+      short: "FTG",
+      label: "Free Throw Generation",
+      source: "KenPom",
+      formula: "Normalized FTR (FTA / FGA)",
+      range: "25.7–45.1",
+      direction: "Higher = more free throws drawn",
+      why: "Measures how aggressively a team attacks the rim and draws contact. High FTG teams are physical, get into the bonus early, and take pressure off the half-court offense. Combined with 3PT, defines the Gunslinger archetype.",
+    },
+    {
+      short: "AdjO",
+      label: "Offensive Efficiency",
+      source: "KenPom",
+      formula: "Normalized KenPom Adjusted Offensive Efficiency",
+      range: "105.6–131.6 points per 100 possessions",
+      direction: "Higher = more efficient offense",
+      why: "The single most predictive offensive metric. Adjusts for opponent strength and pace, giving a clean read on how well a team scores per possession regardless of game speed. Underpins the Offensive Juggernaut and Two-Way Machine classifications.",
+    },
+    {
+      short: "TO",
+      label: "Ball Security",
+      source: "KenPom",
+      formula: "Normalized TO% (inverted — lower turnovers = higher score)",
+      range: "12.3–19.0% turnover rate",
+      direction: "Higher = fewer turnovers",
+      why: "Turnovers are free possessions for the opponent. Teams with elite ball security (Arkansas at 10.0, Houston at 9.1) rarely give games away. In tournament basketball where every possession matters, this is a quiet but important differentiator.",
+    },
+    {
+      short: "ORB",
+      label: "Offensive Rebounding",
+      source: "KenPom",
+      formula: "Normalized ORB%",
+      range: "22.0–45.1%",
+      direction: "Higher = more offensive rebounds",
+      why: "Second-chance points and extended possessions. Elite offensive rebounders (Tennessee at 10.0, Florida at 9.2) effectively give themselves extra shots per game. Correlates with physical size and effort culture, and is a major factor in close games.",
+    },
+    {
+      short: "AdjD",
+      label: "Defensive Efficiency",
+      source: "KenPom",
+      formula: "Normalized KenPom Adjusted Defensive Efficiency (inverted)",
+      range: "89.0–117.2 points allowed per 100 possessions",
+      direction: "Higher = fewer points allowed (better defense)",
+      why: "The defensive counterpart to AdjO. Adjusting for opponent strength makes this far more meaningful than raw points allowed. Duke and Michigan both score 10.0 here — the best defenses in the tournament field. Primary driver of the Defensive Fortress archetype.",
+    },
+    {
+      short: "3PD",
+      label: "Opp 3P% Allowed",
+      source: "KenPom",
+      formula: "Normalized opponent 3P% allowed (inverted)",
+      range: "28.9–36.5% opponent 3P%",
+      direction: "Higher = better arc defense",
+      why: "Measures how well a team defends the three-point line specifically. Northern Iowa is elite here (10.0), holding opponents to near-field-low three-point shooting. As the tournament field increasingly relies on threes, arc defense becomes a major factor in upsets.",
+    },
+    {
+      short: "BLK",
+      label: "Rim Protection",
+      source: "KenPom",
+      formula: "Normalized Block%",
+      range: "6.0–17.5%",
+      direction: "Higher = more shots blocked",
+      why: "Interior shot-blocking deters drives, forces lower-percentage shots, and alters the opponent's offensive game plan. Virginia leads the field (10.0). Teams with elite rim protection force opponents to shoot more difficult mid-range and perimeter shots.",
+    },
+    {
+      short: "STL",
+      label: "Pressure Defense",
+      source: "KenPom",
+      formula: "Normalized Steal%",
+      range: "5.6–15.3%",
+      direction: "Higher = more steals / more disruptive",
+      why: "Steal rate is a proxy for overall defensive pressure and chaos creation. High-steal teams (McNeese at 10.0, Iowa State at 8.1) turn defense into offense frequently. Also signals press-heavy or trap-heavy schemes that can disrupt an opponent's half-court rhythm.",
+    },
+    {
+      short: "EXP",
+      label: "Experience",
+      source: "KenPom",
+      formula: "Normalized D-1 Experience (average years in Division I basketball)",
+      range: "0.74–2.72 years",
+      direction: "Higher = more experienced roster",
+      why: "Roster continuity and experience matter enormously in March. Experienced teams handle pressure, late-game situations, and hostile environments better. The Veteran tag (EXP ≥ 7.5) identifies the top ~30% of the field on this dimension. Gonzaga (10.0) and SMU (10.0) are the most experienced teams in the bracket.",
+    },
+    {
+      short: "CPG",
+      label: "Coaching Pedigree",
+      source: "Manual (last 7 years)",
+      formula: "Scored 1–10 on: tournament appearance rate, win rate, system consistency, conference dominance",
+      range: "1–10",
+      direction: "Higher = stronger coaching track record",
+      why: "The only manually-scored attribute. Coaching matters most in close games, late-game adjustments, and preparation for opponent-specific schemes. A * flag indicates fewer than 3 tournament appearances in the window — score is directionally valid but sample size is small.",
+    },
+  ];
+
+  const TAGS = [
+    { label:"Veteran", color:"#9f1239", threshold:"Experience score ≥ 7.5", coverage:"Top ~30% of the field (21 teams)", desc:"Identifies rosters with significantly above-average continuity and D-1 experience. Veteran teams are statistically better in close games, late-game situations, and hostile road environments. Notable veterans: Gonzaga, SMU, Iowa State, UConn, Purdue, Texas A&M." },
+    { label:"Length",  color:"#0369a1", threshold:"Average height ≥ 78.7\"",  coverage:"Top ~22% of the field (14 teams)", desc:"Identifies teams with elite average height — a proxy for wingspan, rim protection, and rebounding matchup advantages. Length teams can alter shots, dominate the glass, and create mismatches in the post. Illinois leads the field at 80.0\". Notable length teams: Duke (79.3\"), Missouri (79.3\"), North Carolina (79.2\"), Arizona (79.0\")." },
+  ];
+
+  const SUPP = [
+    { short:"Barthag", source:"EvanMiya", desc:"Tournament win probability — the likelihood of beating an average tournament team on a neutral floor. Ranges 0–1. The most direct single-number read on tournament caliber. Duke (0.981) and Michigan (0.980) lead the field." },
+    { short:"RR",      source:"EvanMiya", desc:"Relative Rating — EvanMiya's composite team strength score. Higher is better. Comparable across all D-1 teams. Duke leads the 2026 tournament field at 34.8." },
+    { short:"EM Rank", source:"EvanMiya", desc:"EvanMiya national ranking. Provides context for where each team sits in the full D-1 landscape, not just the tournament field." },
+    { short:"Pace",    source:"KenPom",   desc:"Tempo classification based on KenPom's Adjusted Tempo (possessions per 40 minutes). Fast = 70.0+, Moderate = 67.0–69.9, Slow = below 67.0. Pace acts as a modifier in archetype assignment but is not a scored attribute — it amplifies or dampens a team's identity rather than defining it." },
+  ];
+
+  const Section = ({ title, children }) => (
+    <div style={{ marginBottom:"2rem" }}>
+      <h2 style={{ fontSize:15, fontWeight:600, color:"var(--color-text-primary)", marginBottom:"0.875rem", paddingBottom:"0.5rem", borderBottom:"0.5px solid var(--color-border-tertiary)" }}>{title}</h2>
+      {children}
+    </div>
+  );
+
+  const Card = ({ children, accent }) => (
+    <div style={{ background:"var(--color-background-secondary)", border:`0.5px solid ${accent ? accent+"33" : "var(--color-border-tertiary)"}`, borderLeft: accent ? `3px solid ${accent}` : undefined, borderRadius:"var(--border-radius-lg)", padding:"1rem", marginBottom:"0.75rem" }}>
+      {children}
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth:720 }}>
+
+      {/* Intro */}
+      <div style={{ marginBottom:"1.75rem", padding:"1rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)" }}>
+        <p style={{ margin:0, fontSize:13, color:"var(--color-text-secondary)", lineHeight:1.7 }}>
+          All team scores are computed from <strong>KenPom</strong> and <strong>EvanMiya</strong> subscription data, scraped for the 2026 tournament field. Each of the 10 scored attributes is normalized to the actual range of the 64-team field — a 5.0 is exactly median, 1.0 is the worst in the field, 10.0 is the best. Coaching Pedigree is the only manually-scored attribute.
+        </p>
+      </div>
+
+      {/* Archetypes */}
+      <Section title="Archetypes">
+        <p style={{ fontSize:12, color:"var(--color-text-tertiary)", marginBottom:"1rem", lineHeight:1.6 }}>
+          Each team is assigned exactly one archetype via a weighted scoring engine. Archetypes are checked in order — Two-Way Machine first, System Operator last. Thresholds are hard requirements; anti-thresholds prevent overlap between adjacent archetypes.
+        </p>
+        {ARCHETYPES_FULL.map(a => (
+          <Card key={a.id} accent={a.color}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+              <div style={{ width:10, height:10, borderRadius:"50%", background:a.color, flexShrink:0 }}/>
+              <span style={{ fontSize:14, fontWeight:600, color:a.color }}>{a.name}</span>
+              <span style={{ fontSize:10, color:"var(--color-text-tertiary)", marginLeft:"auto", background:"var(--color-background-primary)", padding:"2px 7px", borderRadius:8, border:"0.5px solid var(--color-border-tertiary)" }}>{a.thresh}</span>
+            </div>
+            <p style={{ margin:"0 0 6px", fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.65 }}>{a.desc}</p>
+            <p style={{ margin:0, fontSize:11, color:"var(--color-text-tertiary)" }}>
+              <span style={{ fontWeight:500, color:"var(--color-text-secondary)" }}>2026 examples: </span>{a.examples}
+            </p>
+          </Card>
+        ))}
+      </Section>
+
+      {/* Scored Attributes */}
+      <Section title="Scored Attributes (1–10)">
+        <p style={{ fontSize:12, color:"var(--color-text-tertiary)", marginBottom:"1rem", lineHeight:1.6 }}>
+          All attributes are normalized linearly to the 2026 tournament field. 5.0 = field median. 1.0 = worst in field. 10.0 = best in field. Inverted attributes are flipped so higher always means better.
+        </p>
+        {ATTRS_FULL.map(a => (
+          <Card key={a.short}>
+            <div style={{ display:"flex", alignItems:"baseline", gap:10, marginBottom:6 }}>
+              <span style={{ fontSize:13, fontWeight:600, color:"var(--color-text-primary)", fontFamily:"var(--font-mono, monospace)" }}>{a.short}</span>
+              <span style={{ fontSize:13, color:"var(--color-text-secondary)" }}>{a.label}</span>
+              <span style={{ marginLeft:"auto", fontSize:10, color:"var(--color-text-tertiary)" }}>{a.source}</span>
+            </div>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:"4px 20px", marginBottom:8 }}>
+              <span style={{ fontSize:11, color:"var(--color-text-tertiary)" }}><b style={{ color:"var(--color-text-secondary)" }}>Formula:</b> {a.formula}</span>
+              <span style={{ fontSize:11, color:"var(--color-text-tertiary)" }}><b style={{ color:"var(--color-text-secondary)" }}>Field range:</b> {a.range}</span>
+              <span style={{ fontSize:11, color:"var(--color-text-tertiary)" }}><b style={{ color:"var(--color-text-secondary)" }}>Direction:</b> {a.direction}</span>
+            </div>
+            <p style={{ margin:0, fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.65 }}>{a.why}</p>
+          </Card>
+        ))}
+      </Section>
+
+      {/* Tags */}
+      <Section title="Tags">
+        <p style={{ fontSize:12, color:"var(--color-text-tertiary)", marginBottom:"1rem", lineHeight:1.6 }}>
+          Tags are supplemental identifiers shown alongside archetypes. A team can have zero, one, or both tags. They add context within an archetype — a Veteran Two-Way Machine is a different tournament threat than a young one.
+        </p>
+        {TAGS.map(t => (
+          <Card key={t.label} accent={t.color}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+              <span style={{ fontSize:13, fontWeight:600, color:t.color }}>{t.label}</span>
+              <span style={{ fontSize:11, color:"var(--color-text-tertiary)" }}>threshold: {t.threshold}</span>
+              <span style={{ marginLeft:"auto", fontSize:10, color:"var(--color-text-tertiary)" }}>{t.coverage}</span>
+            </div>
+            <p style={{ margin:0, fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.65 }}>{t.desc}</p>
+          </Card>
+        ))}
+      </Section>
+
+      {/* Supplemental metrics */}
+      <Section title="Supplemental Metrics">
+        <p style={{ fontSize:12, color:"var(--color-text-tertiary)", marginBottom:"1rem", lineHeight:1.6 }}>
+          These appear on team cards but don't feed into archetype scoring. They provide independent validation and additional context.
+        </p>
+        {SUPP.map(s => (
+          <Card key={s.short}>
+            <div style={{ display:"flex", alignItems:"baseline", gap:10, marginBottom:5 }}>
+              <span style={{ fontSize:13, fontWeight:600, color:"var(--color-text-primary)", fontFamily:"var(--font-mono, monospace)" }}>{s.short}</span>
+              <span style={{ marginLeft:"auto", fontSize:10, color:"var(--color-text-tertiary)" }}>{s.source}</span>
+            </div>
+            <p style={{ margin:0, fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.65 }}>{s.desc}</p>
+          </Card>
+        ))}
+      </Section>
+
+      {/* Normalization note */}
+      <Section title="Normalization & Methodology">
+        <Card>
+          <p style={{ margin:"0 0 8px", fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.7 }}>
+            <strong>Normalization ranges</strong> are calibrated to the actual 2026 tournament field — not the full KenPom top 216. This means scores reflect a team's standing relative to other tournament-quality teams, not all of college basketball. A 5.0 on AdjO means exactly median for a tournament team, which is still very good in absolute terms.
+          </p>
+          <p style={{ margin:"0 0 8px", fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.7 }}>
+            <strong>Archetype assignment</strong> uses a weighted scoring engine with hard thresholds and anti-thresholds to prevent overlap. Thresholds are minimum requirements — a team must clear every threshold for an archetype to be eligible. Anti-thresholds prevent adjacent archetypes from competing unfairly (e.g., a team with elite offense AND defense gets Two-Way Machine, not Offensive Juggernaut).
+          </p>
+          <p style={{ margin:0, fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.7 }}>
+            <strong>Pace</strong> (KenPom AdjT) is a modifier, not a scored attribute. It amplifies or dampens archetype fit scores during assignment — fast pace boosts Sniper System fit, slow pace boosts System Operator fit — but it doesn't appear as a standalone bar because pace alone doesn't define quality.
+          </p>
+        </Card>
+        <Card>
+          <p style={{ margin:"0 0 6px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>Data sources</p>
+          <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+            {[
+              ["KenPom", "Subscription — AdjO, AdjD, AdjT, 3P%, 3PAr, FTR, TO%, ORB%, Block%, Steal%, Opp 3P%, Experience, Avg Height"],
+              ["EvanMiya", "Subscription — Barthag, Relative Rating, Off BPR, Def BPR, national rank"],
+              ["Coaching Pedigree", "Manually scored — last 7 tournament seasons (2019–2025, excl. 2020). * = fewer than 3 appearances"],
+              ["Bracket", "2026 NCAA Tournament official bracket + First Four results"],
+            ].map(([src, detail]) => (
+              <div key={src} style={{ fontSize:11, color:"var(--color-text-tertiary)" }}>
+                <span style={{ fontWeight:500, color:"var(--color-text-secondary)" }}>{src}: </span>{detail}
+              </div>
+            ))}
+          </div>
+        </Card>
+      </Section>
+
+    </div>
+  );
+}
+
 // ── Root ──────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [tab,      setTab]      = useState("classifier");  // "classifier" | "matchups"
+  const [tab,      setTab]      = useState("classifier");  // "classifier" | "matchups" | "glossary"
   const [selected, setSelected] = useState(null);
 
   const tabs = [
     { id: "classifier", label: "Team Classifier" },
     { id: "matchups",   label: "Matchups" },
+    { id: "glossary",   label: "Glossary" },
   ];
 
   return (
@@ -556,8 +814,9 @@ export default function App() {
       {/* Tab content */}
       {tab==="classifier" && <ClassifierTab onTeamClick={setSelected}/>}
       {tab==="matchups"   && <MatchupsTab   onTeamClick={setSelected}/>}
+      {tab==="glossary"   && <GlossaryTab/>}
 
-      {/* Team detail modal — available from both tabs */}
+      {/* Team detail modal — available from classifier and matchups tabs */}
       {selected && <TeamModal team={selected} onClose={()=>setSelected(null)}/>}
     </div>
   );
