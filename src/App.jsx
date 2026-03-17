@@ -494,7 +494,14 @@ function ClassifierTab({ onTeamClick }) {
       if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
+    const avgRank = t => {
+      const kp = t.kenpom_rank < 999 ? t.kenpom_rank : null;
+      const em = t.em_rank ? parseInt(t.em_rank) : null;
+      if (kp && em) return (kp + em) / 2;
+      return kp ?? em ?? 999;
+    };
     return [...t].sort((a,b)=>{
+      if (sortBy==="kenpom")  return avgRank(a) - avgRank(b);
       if (sortBy==="seed")    return a.seed!==b.seed?a.seed-b.seed:a.region.localeCompare(b.region);
       if (sortBy==="rr")      return (b.rr??-999)-(a.rr??-999);
       if (sortBy==="barthag") return (b.barthag??-999)-(a.barthag??-999);
