@@ -1,0 +1,34 @@
+{
+  "updated": "2026-03-18T10:51:33Z",
+  "game_count": 2,
+  "games": [
+    {
+      "espn_id": "",
+      "name": "UMBC vs Howard",
+      "date": "2026-03-17",
+      "state": "post",
+      "detail": "Final",
+      "completed": true,
+      "t1_name": "UMBC",
+      "t1_score": 83,
+      "t1_winner": false,
+      "t2_name": "Howard",
+      "t2_score": 86,
+      "t2_winner": true
+    },
+    {
+      "espn_id": "",
+      "name": "Texas vs NC State",
+      "date": "2026-03-17",
+      "state": "post",
+      "detail": "Final",
+      "completed": true,
+      "t1_name": "Texas",
+      "t1_score": 68,
+      "t1_winner": true,
+      "t2_name": "NC State",
+      "t2_score": 66,
+      "t2_winner": false
+    }
+  ]
+}
