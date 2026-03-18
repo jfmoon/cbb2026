@@ -168,14 +168,19 @@ function ResultBanner({ teamName, scores }) {
   const s = scores?.[teamName];
   if (!s || s.state === "pre") return null;
   const live  = s.state === "in";
-  const color = live ? "#0891b2" : s.winner ? "#1a6b3a" : "#6b7280";
-  const label = live ? `LIVE ${s.score}-${s.opp}` : s.winner ? `W ${s.score}-${s.opp}` : `L ${s.score}-${s.opp}`;
+  const color = live ? "#0891b2" : s.winner ? "#166534" : "#6b7280";
+  const bg    = live ? "#0891b222" : s.winner ? "#dcfce7" : "#f3f4f6";
+  const border= live ? "#0891b244" : s.winner ? "#86efac" : "#d1d5db";
+  const score = `${s.score}-${s.opp}`;
   return (
-    <span style={{ fontSize:9, fontWeight:700, padding:"2px 6px", borderRadius:4,
-      background:color+"20", color, border:`1px solid ${color}44`, marginLeft:4, whiteSpace:"nowrap" }}>
-      {live && <span style={{ display:"inline-block", width:5, height:5, borderRadius:"50%",
-        background:color, marginRight:3, verticalAlign:"middle" }}/>}
-      {label}{live && s.detail ? " "+s.detail : ""}
+    <span style={{ display:"inline-flex", alignItems:"center", gap:4,
+      fontSize:11, fontWeight:700, padding:"3px 8px", borderRadius:6,
+      background:bg, color, border:`1.5px solid ${border}`,
+      marginLeft:5, whiteSpace:"nowrap", letterSpacing:"0.01em" }}>
+      {live && <span style={{ width:6, height:6, borderRadius:"50%", background:color, flexShrink:0,
+        animation:"pulse 1.2s infinite" }}/>}
+      {live ? `LIVE ${score}` : s.winner ? `W ${score}` : `L ${score}`}
+      {!live && <span style={{ fontSize:9, fontWeight:500, opacity:0.7, marginLeft:2 }}>Final</span>}
     </span>
   );
 }
@@ -850,6 +855,291 @@ function GlossaryTab() {
 //   Inputs: TO differential, 3P volatility, ORB edge, FTR edge, arc D, tempo
 //   Source: KenPom scraped stats (kenpom_scraper.py)
 
+
+// ── Compare Tab ───────────────────────────────────────────────────────────────
+function CompareTab({ onTeamClick }) {
+  const [teamA, setTeamA] = useState(null);
+  const [teamB, setTeamB] = useState(null);
+  const [searchA, setSearchA] = useState("");
+  const [searchB, setSearchB] = useState("");
+  const [focusA, setFocusA] = useState(false);
+  const [focusB, setFocusB] = useState(false);
+
+  const ALL_ATTRS = [
+    { key:"off_efficiency",   label:"Off Efficiency",  short:"AdjO" },
+    { key:"def_efficiency",   label:"Def Efficiency",  short:"AdjD" },
+    { key:"three_pt_prowess", label:"3PT Shooting",    short:"3PT"  },
+    { key:"free_throw_gen",   label:"FT Generation",   short:"FTG"  },
+    { key:"ball_security",    label:"Ball Security",   short:"TO"   },
+    { key:"off_rebounding",   label:"Off Rebounding",  short:"ORB"  },
+    { key:"rim_protection",   label:"Rim Protection",  short:"BLK"  },
+    { key:"pressure_defense", label:"Press Defense",   short:"STL"  },
+    { key:"opp_3pt_allowed",  label:"Arc Defense",     short:"3PD"  },
+    { key:"experience",       label:"Experience",      short:"EXP"  },
+  ];
+
+  const filteredA = useMemo(() =>
+    TEAMS.filter(t => t.name.toLowerCase().includes(searchA.toLowerCase())).slice(0,8),
+  [searchA]);
+  const filteredB = useMemo(() =>
+    TEAMS.filter(t => t.name.toLowerCase().includes(searchB.toLowerCase())).slice(0,8),
+  [searchB]);
+
+  const archA = teamA ? ARCH_MAP[teamA.archetype] : null;
+  const archB = teamB ? ARCH_MAP[teamB.archetype] : null;
+  const jbA   = teamA ? JB_DATA[teamA.name]?.jb : null;
+  const jbB   = teamB ? JB_DATA[teamB.name]?.jb : null;
+
+  const TeamPicker = ({ label, selected, search, setSearch, focused, setFocused, onSelect, onClear }) => (
+    <div style={{ flex:1, minWidth:0 }}>
+      <div style={{ fontSize:10, fontWeight:600, color:"var(--color-text-tertiary)",
+        textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:6 }}>{label}</div>
+      {selected ? (
+        <div style={{ border:`2px solid ${ARCH_MAP[selected.archetype]?.color||"#888"}`,
+          borderRadius:10, overflow:"hidden" }}>
+          {/* Selected team card */}
+          <div style={{ padding:"10px 12px", background:"var(--color-background-secondary)" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+              <div>
+                <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
+                  <SeedBubble seed={selected.seed} ff={selected.is_ff||false}/>
+                  <span style={{ fontSize:16, fontWeight:700, color:"var(--color-text-primary)" }}>{selected.name}</span>
+                </div>
+                <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
+                  <ArchetypePill id={selected.archetype}/>
+                  {selected.is_veteran && <Tag label="Veteran" color="#9f1239"/>}
+                  {selected.is_length  && <Tag label="Length"  color="#0369a1"/>}
+                  <PaceDot label={selected.pace_label}/>
+                </div>
+              </div>
+              <button onClick={onClear} style={{ background:"none", border:"none", cursor:"pointer",
+                color:"var(--color-text-tertiary)", fontSize:16, lineHeight:1, padding:2 }}>✕</button>
+            </div>
+            {selected.barthag != null && (
+              <div style={{ display:"flex", gap:12, marginTop:8, fontSize:11, color:"var(--color-text-secondary)" }}>
+                <span>Barthag <b>{selected.barthag?.toFixed(3)}</b></span>
+                {selected.rr != null && <span>RR <b>{selected.rr?.toFixed(1)}</b></span>}
+                {jbA != null && label === "Team A" && <span>jbScore <b style={{ color:ARCH_MAP[selected.archetype]?.color }}>{jbA?.toFixed(1)}</b></span>}
+                {jbB != null && label === "Team B" && <span>jbScore <b style={{ color:ARCH_MAP[selected.archetype]?.color }}>{jbB?.toFixed(1)}</b></span>}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div style={{ position:"relative" }}>
+          <input
+            value={search}
+            onChange={e => { setSearch(e.target.value); setFocused(true); }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setTimeout(() => setFocused(false), 150)}
+            placeholder={`Search ${label}...`}
+            style={{ width:"100%", boxSizing:"border-box", padding:"9px 12px", borderRadius:8,
+              border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-primary)",
+              color:"var(--color-text-primary)", fontSize:13, outline:"none" }}
+          />
+          {focused && search.length > 0 && (
+            <div style={{ position:"absolute", top:"100%", left:0, right:0, zIndex:100,
+              background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-secondary)",
+              borderRadius:8, marginTop:4, boxShadow:"0 4px 20px rgba(0,0,0,0.15)", overflow:"hidden" }}>
+              {(label === "Team A" ? filteredA : filteredB).map(t => (
+                <div key={t.id} onMouseDown={() => { onSelect(t); setSearch(""); setFocused(false); }}
+                  style={{ padding:"8px 12px", cursor:"pointer", display:"flex", alignItems:"center",
+                    gap:8, borderBottom:"0.5px solid var(--color-border-tertiary)" }}
+                  onMouseEnter={e => e.currentTarget.style.background="var(--color-background-secondary)"}
+                  onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+                  <SeedBubble seed={t.seed} ff={t.is_ff||false}/>
+                  <span style={{ fontSize:13, color:"var(--color-text-primary)", fontWeight:500 }}>{t.name}</span>
+                  <span style={{ marginLeft:"auto", fontSize:10, color:"var(--color-text-tertiary)" }}>{t.region}</span>
+                  <ArchetypePill id={t.archetype} small/>
+                </div>
+              ))}
+              {(label === "Team A" ? filteredA : filteredB).length === 0 && (
+                <div style={{ padding:"12px", fontSize:12, color:"var(--color-text-tertiary)", textAlign:"center" }}>No teams found</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div>
+      {/* Team pickers */}
+      <div style={{ display:"flex", gap:12, marginBottom:"1.5rem", alignItems:"flex-start" }}>
+        <TeamPicker label="Team A" selected={teamA} search={searchA} setSearch={setSearchA}
+          focused={focusA} setFocused={setFocusA} onSelect={setTeamA} onClear={() => setTeamA(null)}/>
+        <div style={{ display:"flex", alignItems:"center", paddingTop: teamA || teamB ? 44 : 30,
+          fontSize:13, fontWeight:600, color:"var(--color-text-tertiary)", flexShrink:0 }}>vs</div>
+        <TeamPicker label="Team B" selected={teamB} search={searchB} setSearch={setSearchB}
+          focused={focusB} setFocused={setFocusB} onSelect={setTeamB} onClear={() => setTeamB(null)}/>
+      </div>
+
+      {/* Empty state */}
+      {!teamA && !teamB && (
+        <div style={{ textAlign:"center", padding:"3rem 1rem", color:"var(--color-text-tertiary)", fontSize:13 }}>
+          Search for two teams above to compare their profiles head-to-head
+        </div>
+      )}
+
+      {/* Comparison */}
+      {teamA && teamB && (() => {
+        const colorA = archA?.color || "#888";
+        const colorB = archB?.color || "#888";
+
+        return (
+          <div>
+            {/* jbScore summary bar */}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr",
+              gap:8, alignItems:"center", marginBottom:"1.25rem",
+              padding:"12px 16px", background:"var(--color-background-secondary)",
+              borderRadius:10, border:"0.5px solid var(--color-border-tertiary)" }}>
+              <div>
+                <div style={{ fontSize:10, color:"var(--color-text-tertiary)", marginBottom:3 }}>jbScore</div>
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <div style={{ flex:1, height:8, background:"var(--color-border-tertiary)", borderRadius:4, overflow:"hidden" }}>
+                    <div style={{ width:`${Math.min(100,jbA||0)}%`, height:"100%", background:colorA, borderRadius:4 }}/>
+                  </div>
+                  <span style={{ fontSize:18, fontWeight:700, color:colorA, width:40, textAlign:"right" }}>{jbA?.toFixed(1)}</span>
+                </div>
+              </div>
+              <div style={{ fontSize:11, color:"var(--color-text-tertiary)", textAlign:"center", padding:"0 8px" }}>
+                {jbA != null && jbB != null && (
+                  <span style={{ fontWeight:600, color: Math.abs(jbA-jbB) < 5 ? "#c2410c" : "var(--color-text-secondary)" }}>
+                    Δ {Math.abs(jbA-jbB).toFixed(1)}
+                  </span>
+                )}
+              </div>
+              <div>
+                <div style={{ fontSize:10, color:"var(--color-text-tertiary)", marginBottom:3, textAlign:"right" }}>jbScore</div>
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ fontSize:18, fontWeight:700, color:colorB, width:40 }}>{jbB?.toFixed(1)}</span>
+                  <div style={{ flex:1, height:8, background:"var(--color-border-tertiary)", borderRadius:4, overflow:"hidden" }}>
+                    <div style={{ width:`${Math.min(100,jbB||0)}%`, height:"100%", background:colorB, borderRadius:4 }}/>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Attribute butterfly bars */}
+            <div style={{ border:"0.5px solid var(--color-border-tertiary)", borderRadius:10, overflow:"hidden" }}>
+              {/* Header */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 52px 1fr",
+                background:"var(--color-background-secondary)",
+                borderBottom:"0.5px solid var(--color-border-tertiary)", padding:"8px 12px", alignItems:"center" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  <div style={{ width:10, height:10, borderRadius:2, background:colorA, flexShrink:0 }}/>
+                  <span style={{ fontSize:12, fontWeight:600, color:colorA }}>{teamA.name}</span>
+                  <span style={{ fontSize:10, color:"var(--color-text-tertiary)" }}>({teamA.region} {teamA.seed})</span>
+                </div>
+                <div style={{ textAlign:"center", fontSize:10, color:"var(--color-text-tertiary)" }}>Attr</div>
+                <div style={{ display:"flex", alignItems:"center", gap:6, justifyContent:"flex-end" }}>
+                  <span style={{ fontSize:10, color:"var(--color-text-tertiary)" }}>({teamB.region} {teamB.seed})</span>
+                  <span style={{ fontSize:12, fontWeight:600, color:colorB }}>{teamB.name}</span>
+                  <div style={{ width:10, height:10, borderRadius:2, background:colorB, flexShrink:0 }}/>
+                </div>
+              </div>
+
+              {/* Bars */}
+              {ALL_ATTRS.map(a => {
+                const vA = teamA[a.key] ?? null;
+                const vB = teamB[a.key] ?? null;
+                const pA = vA != null ? ((vA-1)/9)*100 : 0;
+                const pB = vB != null ? ((vB-1)/9)*100 : 0;
+                const wA = vA != null && vB != null && vA > vB;
+                const wB = vB != null && vA != null && vB > vA;
+                return (
+                  <div key={a.key} style={{ display:"grid", gridTemplateColumns:"1fr 52px 1fr",
+                    alignItems:"center", padding:"5px 12px",
+                    borderBottom:"0.5px solid var(--color-border-tertiary)" }}>
+
+                    {/* Left bar — fills right to left */}
+                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                      <span style={{ fontSize:11, fontWeight:wA?700:400,
+                        color:wA?colorA:"var(--color-text-tertiary)", width:28, textAlign:"right", flexShrink:0 }}>
+                        {vA?.toFixed(1) ?? "—"}
+                      </span>
+                      <div style={{ flex:1, height:6, background:"var(--color-border-tertiary)", borderRadius:3, overflow:"hidden" }}>
+                        <div style={{ position:"relative", height:"100%", width:"100%" }}>
+                          <div style={{ position:"absolute", right:0, top:0, height:"100%",
+                            width:`${pA}%`, background:wA?colorA:colorA+"55", borderRadius:3 }}/>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Label */}
+                    <div style={{ textAlign:"center", fontSize:10, fontWeight:500,
+                      color:"var(--color-text-tertiary)", padding:"0 4px" }}>{a.short}</div>
+
+                    {/* Right bar — fills left to right */}
+                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                      <div style={{ flex:1, height:6, background:"var(--color-border-tertiary)", borderRadius:3, overflow:"hidden" }}>
+                        <div style={{ width:`${pB}%`, height:"100%", background:wB?colorB:colorB+"55", borderRadius:3 }}/>
+                      </div>
+                      <span style={{ fontSize:11, fontWeight:wB?700:400,
+                        color:wB?colorB:"var(--color-text-tertiary)", width:28, textAlign:"left", flexShrink:0 }}>
+                        {vB?.toFixed(1) ?? "—"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Coaching pedigree + key stats footer */}
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginTop:"1rem" }}>
+              {[{team:teamA, color:colorA, jb:jbA}, {team:teamB, color:colorB, jb:jbB}].map(({team, color, jb}, i) => {
+                const cp = CP[team.name];
+                const jbd = JB_DATA[team.name];
+                return (
+                  <div key={i} style={{ padding:"10px 12px", background:"var(--color-background-secondary)",
+                    borderRadius:8, border:`0.5px solid ${color}44` }}>
+                    <div style={{ fontSize:11, fontWeight:600, color, marginBottom:6 }}>{team.name}</div>
+                    <div style={{ display:"flex", flexDirection:"column", gap:3 }}>
+                      {[
+                        ["KP Rank",  `#${team.kenpom_rank}`],
+                        ["EM Rank",  team.em_rank ? `#${team.em_rank}` : "—"],
+                        ["Barthag",  team.barthag?.toFixed(3)],
+                        ["RR",       team.rr?.toFixed(1)],
+                        ["jbScore",  jb?.toFixed(1)],
+                        ["AdjO",     jbd?.adjo],
+                        ["AdjD",     jbd?.adjd],
+                        ["Pace",     team.pace_label],
+                        ["Coach",    cp ? `${cp.coach}${cp.note?" ("+cp.note+")":""}` : "—"],
+                      ].map(([k,v]) => v != null && v !== "—" && (
+                        <div key={k} style={{ display:"flex", justifyContent:"space-between",
+                          fontSize:11, color:"var(--color-text-secondary)" }}>
+                          <span style={{ color:"var(--color-text-tertiary)" }}>{k}</span>
+                          <b>{v}</b>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Quick picks button */}
+            <button onClick={() => { setTeamA(null); setTeamB(null); setSearchA(""); setSearchB(""); }}
+              style={{ marginTop:"1rem", width:"100%", padding:"9px", borderRadius:8, border:"none",
+                background:"var(--color-background-secondary)", color:"var(--color-text-tertiary)",
+                fontSize:12, cursor:"pointer" }}>
+              ↺ Clear & compare another matchup
+            </button>
+          </div>
+        );
+      })()}
+
+      {/* One team selected, waiting for second */}
+      {((teamA && !teamB) || (!teamA && teamB)) && (
+        <div style={{ textAlign:"center", padding:"2rem 1rem", color:"var(--color-text-tertiary)", fontSize:13 }}>
+          Now search for {teamA ? "Team B" : "Team A"} to compare
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PicksTab({ onTeamClick }) {
   const [sortBy, setSortBy]           = useState("upset");
   const [filterRegion, setFilterRegion] = useState("All");
@@ -1104,8 +1394,9 @@ export default function App() {
   const tabs = [
     { id: "classifier", label: "Team Classifier" },
     { id: "matchups",   label: "Matchups" },
-    { id: "glossary",   label: "Glossary" },
     { id: "picks",     label: "Picks & Analysis" },
+    { id: "compare",   label: "Compare" },
+    { id: "glossary",   label: "Glossary" },
   ];
 
   return (
@@ -1136,6 +1427,7 @@ export default function App() {
       {tab==="matchups"   && <MatchupsTab   onTeamClick={setSelected} scores={scores} lastUpdate={lastUpdate}/>}
       {tab==="glossary"   && <GlossaryTab/>}
       {tab==="picks"     && <PicksTab onTeamClick={setSelected} scores={scores}/>}
+      {tab==="compare"   && <CompareTab onTeamClick={setSelected}/>}
 
       {/* Team detail modal — available from both tabs */}
       {selected && <TeamModal team={selected} onClose={()=>setSelected(null)}/>}
