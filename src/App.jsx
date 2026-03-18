@@ -133,11 +133,17 @@ function useScores() {
   const timerRef = useRef(null);
 
   function buildLookup(games) {
+    // Store as array of results per team — a team can appear multiple times
+    // (e.g. Howard in First Four AND First Round)
     const map = {};
     for (const g of games) {
       if (g.state === "pre") continue;
-      map[g.t1_name] = { score:g.t1_score, opp:g.t2_score, winner:g.t1_winner, detail:g.detail, state:g.state };
-      map[g.t2_name] = { score:g.t2_score, opp:g.t1_score, winner:g.t2_winner, detail:g.detail, state:g.state };
+      const entry1 = { score:g.t1_score, opp:g.t2_score, winner:g.t1_winner, detail:g.detail, state:g.state, date:g.date };
+      const entry2 = { score:g.t2_score, opp:g.t1_score, winner:g.t2_winner, detail:g.detail, state:g.state, date:g.date };
+      if (!map[g.t1_name]) map[g.t1_name] = [];
+      if (!map[g.t2_name]) map[g.t2_name] = [];
+      map[g.t1_name].push(entry1);
+      map[g.t2_name].push(entry2);
     }
     return map;
   }
@@ -164,8 +170,13 @@ function useScores() {
 }
 
 // ── Result Banner ─────────────────────────────────────────────────────────────
-function ResultBanner({ teamName, scores }) {
-  const s = scores?.[teamName];
+function ResultBanner({ teamName, scores, gameDate }) {
+  // Find the result for this specific game date (prevents carrying results forward)
+  const all = scores?.[teamName];
+  if (!all || !all.length) return null;
+  const s = gameDate
+    ? all.find(r => r.date === gameDate) ?? null
+    : all[all.length - 1]; // no date = show latest
   if (!s || s.state === "pre") return null;
   const live  = s.state === "in";
   const color = live ? "#0891b2" : s.winner ? "#166534" : "#6b7280";
@@ -374,7 +385,7 @@ function MatchupCard({ matchup, onTeamClick, scores }) {
         <div style={{ display:"flex", alignItems:"center", gap:5, justifyContent:isRight?"flex-end":"flex-start", marginBottom:3 }}>
           <SeedBubble seed={team.seed} ff={team.is_ff||false}/>
           <span style={{ fontSize:14, fontWeight:600, color:"var(--color-text-primary)", lineHeight:1.2 }}>{team.name}</span>
-          <ResultBanner teamName={team.name} scores={scores}/>
+          <ResultBanner teamName={team.name} scores={scores} gameDate={matchup.date}/>
         </div>
         <div style={{ display:"flex", gap:4, flexWrap:"wrap", justifyContent:isRight?"flex-end":"flex-start", marginBottom:4 }}>
           <ArchetypePill id={team.archetype} small/>
@@ -653,7 +664,7 @@ function ClassifierTab({ onTeamClick, scores }) {
         <div style={{ border:"0.5px solid var(--color-border-tertiary)", borderRadius:10, overflow:"hidden" }}>
           {visible.length===0
             ? <div style={{ padding:"2rem", textAlign:"center", fontSize:13, color:"var(--color-text-tertiary)" }}>No teams match filters.</div>
-            : visible.map(t=><TeamRow key={t.id} team={t} onClick={()=>onTeamClick(t)} eliminated={scores?.[t.name]?.winner===false}/>)
+            : visible.map(t=><TeamRow key={t.id} team={t} onClick={()=>onTeamClick(t)} eliminated={scores?.[t.name]?.some(r=>r.winner===false&&r.state==="post")}/>)
           }
         </div>
       )}
@@ -671,7 +682,7 @@ function ClassifierTab({ onTeamClick, scores }) {
                   <span style={{ fontSize:11,color:"var(--color-text-tertiary)" }}>— {arch.description}</span>
                   <span style={{ marginLeft:"auto",fontSize:11,color:"var(--color-text-tertiary)" }}>{teams.length}</span>
                 </div>
-                {teams.map(t=><TeamRow key={t.id} team={t} onClick={()=>onTeamClick(t)} eliminated={scores?.[t.name]?.winner===false}/>)}
+                {teams.map(t=><TeamRow key={t.id} team={t} onClick={()=>onTeamClick(t)} eliminated={scores?.[t.name]?.some(r=>r.winner===false&&r.state==="post")}/>)}
               </div>
             );
           })}
