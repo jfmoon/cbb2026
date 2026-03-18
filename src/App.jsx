@@ -879,10 +879,10 @@ function CompareTab({ onTeamClick }) {
   ];
 
   const filteredA = useMemo(() =>
-    TEAMS.filter(t => t.name.toLowerCase().includes(searchA.toLowerCase())).slice(0,8),
+    TEAMS_WITH_CP.filter(t => t.name.toLowerCase().includes(searchA.toLowerCase())).slice(0,8),
   [searchA]);
   const filteredB = useMemo(() =>
-    TEAMS.filter(t => t.name.toLowerCase().includes(searchB.toLowerCase())).slice(0,8),
+    TEAMS_WITH_CP.filter(t => t.name.toLowerCase().includes(searchB.toLowerCase())).slice(0,8),
   [searchB]);
 
   const archA = teamA ? ARCH_MAP[teamA.archetype] : null;
