@@ -787,14 +787,36 @@ function GlossaryTab() {
 //   Source: KenPom scraped stats (kenpom_scraper.py)
 
 function PicksTab({ onTeamClick }) {
-  const [sortBy, setSortBy] = useState("upset");
+  const [sortBy, setSortBy]           = useState("upset");
   const [filterRegion, setFilterRegion] = useState("All");
-  const [filterTier, setFilterTier] = useState("All");
+  const [filterTier, setFilterTier]   = useState("All");
+
+  // Heatmap: jbDelta -5 → 0 = deep red (hottest), 0→15 = orange, 15→30 = amber,
+  //          30→45 = yellow-green, 45→65 = teal/blue (coolest)
+  function gapColor(delta) {
+    if (delta < 0)  return { bg:"#7f1d1d", text:"#fca5a5", border:"#991b1b" }; // deep red
+    if (delta < 5)  return { bg:"#991b1b", text:"#fecaca", border:"#b91c1c" }; // red
+    if (delta < 12) return { bg:"#c2410c", text:"#fed7aa", border:"#ea580c" }; // orange
+    if (delta < 20) return { bg:"#b45309", text:"#fde68a", border:"#d97706" }; // amber
+    if (delta < 30) return { bg:"#4d7c0f", text:"#d9f99d", border:"#65a30d" }; // yellow-green
+    if (delta < 45) return { bg:"#0f766e", text:"#99f6e4", border:"#0d9488" }; // teal
+    return             { bg:"#1d4ed8", text:"#bfdbfe", border:"#3b82f6" };     // blue (coldest)
+  }
+
+  function gapLabel(delta) {
+    if (delta < 0)  return "Toss-up";
+    if (delta < 5)  return "Razor thin";
+    if (delta < 12) return "Narrow gap";
+    if (delta < 20) return "Moderate gap";
+    if (delta < 30) return "Clear gap";
+    if (delta < 45) return "Large gap";
+    return "Blowout likely";
+  }
 
   const TIER_META = {
-    strong:   { label:"Strong upset candidate",  color:"#dc2626", bg:"#fef2f2" },
-    moderate: { label:"Moderate upset potential", color:"#d97706", bg:"#fffbeb" },
-    low:      { label:"Low upset probability",    color:"#475569", bg:"var(--color-background-secondary)" },
+    strong:   { label:"⚡ Strong upset candidate",  color:"#dc2626" },
+    moderate: { label:"▲ Moderate upset potential", color:"#d97706" },
+    low:      { label:"— Low upset probability",    color:"#475569" },
   };
 
   const filtered = useMemo(() => {
@@ -802,47 +824,39 @@ function PicksTab({ onTeamClick }) {
     if (filterRegion !== "All") d = d.filter(m => m.region === filterRegion);
     if (filterTier   !== "All") d = d.filter(m => m.tier   === filterTier);
     if (sortBy === "upset")      d.sort((a,b) => b.upset_score - a.upset_score);
-    if (sortBy === "moon_delta") d.sort((a,b) => b.jb_delta  - a.jb_delta);
+    if (sortBy === "jb_delta")   d.sort((a,b) => a.jb_delta   - b.jb_delta);
     if (sortBy === "seed_gap")   d.sort((a,b) => (b.dog_seed - b.fav_seed) - (a.dog_seed - a.fav_seed));
     if (sortBy === "region")     d.sort((a,b) => a.region.localeCompare(b.region));
     return d;
   }, [sortBy, filterRegion, filterTier]);
 
-  const MoonBar = ({ name, score, color }) => {
-    const pct = Math.max(0, Math.min(100, score));
-    return (
-      <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-        <div style={{ flex:1, height:6, background:"var(--color-border-tertiary)", borderRadius:3, overflow:"hidden" }}>
-          <div style={{ width:`${pct}%`, height:"100%", background:color, borderRadius:3 }}/>
-        </div>
-        <span style={{ fontSize:11, fontWeight:600, color:"var(--color-text-secondary)", width:32, textAlign:"right" }}>
-          {score?.toFixed(1)}
-        </span>
+  const JbBar = ({ score, color }) => (
+    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+      <div style={{ flex:1, height:6, background:"var(--color-border-tertiary)", borderRadius:3, overflow:"hidden" }}>
+        <div style={{ width:`${Math.max(0,Math.min(100,score))}%`, height:"100%", background:color, borderRadius:3 }}/>
       </div>
-    );
-  };
+      <span style={{ fontSize:11, fontWeight:600, color:"var(--color-text-secondary)", width:32, textAlign:"right" }}>
+        {score?.toFixed(1)}
+      </span>
+    </div>
+  );
 
   const EdgePill = ({ value, label }) => {
-    if (value === undefined || value === null) return null;
+    if (!value || Math.abs(value) < 5) return null;
     const pos = value > 0;
-    const abs = Math.abs(value);
-    if (abs < 5) return null; // suppress noise
     return (
       <span style={{
         fontSize:9, padding:"1px 5px", borderRadius:4, fontWeight:500,
         background: pos ? "#dcfce7" : "#fee2e2",
         color:      pos ? "#166534" : "#991b1b",
         border: `1px solid ${pos ? "#86efac" : "#fca5a5"}`,
-      }}>
-        {pos ? "+" : ""}{value.toFixed(0)} {label}
-      </span>
+      }}>{pos?"+":""}{value.toFixed(0)} {label}</span>
     );
   };
 
   const UpsetMeter = ({ score }) => {
-    // Normalize -25 to +20 range → 0-100% fill
     const pct = Math.max(0, Math.min(100, ((score + 25) / 45) * 100));
-    const color = score > 15 ? "#dc2626" : score > 5 ? "#d97706" : "#475569";
+    const color = score > 15 ? "#dc2626" : score > 5 ? "#d97706" : "#6b7280";
     return (
       <div style={{ display:"flex", alignItems:"center", gap:6 }}>
         <div style={{ flex:1, height:8, background:"var(--color-border-tertiary)", borderRadius:4, overflow:"hidden", position:"relative" }}>
@@ -860,27 +874,26 @@ function PicksTab({ onTeamClick }) {
     <div>
       {/* Explainer */}
       <div style={{ marginBottom:"1rem", padding:"0.875rem 1rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)" }}>
-        <div style={{ display:"flex", gap:16, flexWrap:"wrap", alignItems:"flex-start" }}>
-          <div style={{ flex:1, minWidth:200 }}>
-            <p style={{ margin:"0 0 4px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>jbScore (baseline)</p>
+        <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
+          <div style={{ flex:1, minWidth:180 }}>
+            <p style={{ margin:"0 0 3px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>jbScore (baseline)</p>
             <p style={{ margin:0, fontSize:11, color:"var(--color-text-tertiary)", lineHeight:1.5 }}>
-              Team quality index 0–100, normalized to the 2026 field. Weights AdjO/D, net rating, 3P%, FTR, TO%, steals, blocks, ORB, arc defense, experience, height. Higher = better team.
+              Team quality 0–100, normalized to 2026 field. Weights AdjO/D, NetRTG, 3P%, FTR, TO%, Steal%, Barthag, RR, EM Rank, KP Rank.
             </p>
           </div>
-          <div style={{ flex:1, minWidth:200 }}>
-            <p style={{ margin:"0 0 4px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>Upset Score (overlay)</p>
+          <div style={{ flex:1, minWidth:180 }}>
+            <p style={{ margin:"0 0 3px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>Upset Score (overlay)</p>
             <p style={{ margin:0, fontSize:11, color:"var(--color-text-tertiary)", lineHeight:1.5 }}>
-              Possession-volatility edge for the underdog. Positive = dog has statistical advantages that create upset probability. Weights TO differential, 3P volatility, ORB, FTR, arc defense, tempo.
+              Possession-volatility edge for the underdog. Positive = dog has statistical advantages that generate upset probability.
             </p>
           </div>
-          <div style={{ flex:1, minWidth:200 }}>
-            <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-              {Object.entries(TIER_META).map(([tier, meta]) => (
-                <div key={tier} style={{ display:"flex", alignItems:"center", gap:6 }}>
-                  <div style={{ width:8, height:8, borderRadius:2, background:meta.color, flexShrink:0 }}/>
-                  <span style={{ fontSize:11, color:"var(--color-text-secondary)" }}>{meta.label}</span>
-                </div>
-              ))}
+          <div style={{ flex:1, minWidth:180 }}>
+            <p style={{ margin:"0 0 3px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>jbGap heatmap</p>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:4 }}>
+              {[[-5,"Toss-up"],[5,"Razor thin"],[12,"Narrow"],[20,"Moderate"],[30,"Clear"],[45,"Large"],[55,"Blowout"]].map(([d,l])=>{
+                const c = gapColor(d);
+                return <span key={l} style={{ fontSize:9, padding:"2px 6px", borderRadius:4, background:c.bg, color:c.text, border:`1px solid ${c.border}` }}>{l}</span>;
+              })}
             </div>
           </div>
         </div>
@@ -891,7 +904,7 @@ function PicksTab({ onTeamClick }) {
         <select value={filterRegion} onChange={e=>setFilterRegion(e.target.value)}
           style={{ fontSize:12, padding:"5px 6px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-primary)", color:"var(--color-text-primary)" }}>
           <option value="All">All Regions</option>
-          {["East","South","West","Midwest"].map(r => <option key={r} value={r}>{r}</option>)}
+          {["East","South","West","Midwest"].map(r=><option key={r} value={r}>{r}</option>)}
         </select>
         <select value={filterTier} onChange={e=>setFilterTier(e.target.value)}
           style={{ fontSize:12, padding:"5px 6px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-primary)", color:"var(--color-text-primary)" }}>
@@ -903,39 +916,40 @@ function PicksTab({ onTeamClick }) {
         <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
           style={{ fontSize:12, padding:"5px 6px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-primary)", color:"var(--color-text-primary)" }}>
           <option value="upset">Sort: Upset Score</option>
-          <option value="moon_delta">Sort: jbScore gap</option>
+          <option value="jb_delta">Sort: jbGap (hottest first)</option>
           <option value="seed_gap">Sort: Seed gap</option>
           <option value="region">Sort: Region</option>
         </select>
-        <span style={{ fontSize:11, color:"var(--color-text-tertiary)", marginLeft:"auto" }}>{filtered.length} matchup{filtered.length !== 1 ? "s" : ""}</span>
+        <span style={{ fontSize:11, color:"var(--color-text-tertiary)", marginLeft:"auto" }}>{filtered.length} matchup{filtered.length!==1?"s":""}</span>
       </div>
 
       {/* Matchup cards */}
       <div style={{ display:"flex", flexDirection:"column", gap:"0.75rem" }}>
-        {filtered.map((m, i) => {
-          const tm = TIER_META[m.tier];
+        {filtered.map((m,i) => {
+          const tm   = TIER_META[m.tier];
+          const gc   = gapColor(m.jb_delta);
           const oFav = ODDS[m.fav] || {};
           const oDog = ODDS[m.dog] || {};
-          const moonFav = JB_DATA[m.fav]?.jb;
-          const moonDog = JB_DATA[m.dog]?.jb;
+          const jbFav = JB_DATA[m.fav]?.jb;
+          const jbDog = JB_DATA[m.dog]?.jb;
           const favColor = "#475569";
-          const dogColor = m.tier === "strong" ? "#dc2626" : m.tier === "moderate" ? "#d97706" : "#6b7280";
+          const dogColor = m.tier==="strong" ? "#dc2626" : m.tier==="moderate" ? "#d97706" : "#6b7280";
 
           return (
-            <div key={i} style={{ border:`0.5px solid ${tm.color}44`, borderLeft:`3px solid ${tm.color}`, borderRadius:"var(--border-radius-lg)", overflow:"hidden" }}>
+            <div key={i} style={{ border:`1px solid ${gc.border}`, borderRadius:"var(--border-radius-lg)", overflow:"hidden" }}>
 
-              {/* Header */}
-              <div style={{ background:"var(--color-background-secondary)", padding:"6px 12px", display:"flex", alignItems:"center", gap:8, borderBottom:"0.5px solid var(--color-border-tertiary)", flexWrap:"wrap" }}>
-                <span style={{ fontSize:10, fontWeight:600, letterSpacing:"0.05em", textTransform:"uppercase", color:tm.color, padding:"2px 6px", background:tm.color+"15", borderRadius:4 }}>
-                  {m.tier === "strong" ? "⚡ Strong" : m.tier === "moderate" ? "▲ Moderate" : "— Low"}
+              {/* Header — heatmap colored by jbGap */}
+              <div style={{ background:gc.bg, padding:"7px 12px", display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                <span style={{ fontSize:11, fontWeight:600, color:gc.text }}>
+                  jbGap {m.jb_delta.toFixed(1)} — {gapLabel(m.jb_delta)}
                 </span>
-                <span style={{ fontSize:11, color:"var(--color-text-secondary)", fontWeight:500 }}>{m.region} · {m.site}</span>
-                <span style={{ fontSize:10, color:"var(--color-text-tertiary)", marginLeft:"auto" }}>{m.date}</span>
+                <span style={{ fontSize:10, color:gc.text, opacity:0.75, marginLeft:"auto" }}>
+                  {m.region} · {m.site} · {m.date}
+                </span>
               </div>
 
               <div style={{ padding:"10px 12px" }}>
-
-                {/* Team rows */}
+                {/* Teams side by side */}
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:10 }}>
 
                   {/* Favorite */}
@@ -943,18 +957,20 @@ function PicksTab({ onTeamClick }) {
                     <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:4 }}>
                       <span style={{ fontSize:10, background:"var(--color-border-tertiary)", borderRadius:"50%", width:18, height:18, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:600, flexShrink:0 }}>{m.fav_seed}</span>
                       <span style={{ fontSize:13, fontWeight:600, color:"var(--color-text-primary)", cursor:"pointer" }}
-                        onClick={() => { const t = TEAMS.find(t => t.name === m.fav); if(t) onTeamClick(t); }}>
+                        onClick={()=>{const t=TEAMS.find(t=>t.name===m.fav);if(t)onTeamClick(t);}}>
                         {m.fav}
                       </span>
                     </div>
                     <div style={{ marginBottom:4 }}>
                       <div style={{ fontSize:9, color:"var(--color-text-tertiary)", marginBottom:2 }}>jbScore</div>
-                      <MoonBar name={m.fav} score={moonFav} color={favColor}/>
+                      <JbBar score={jbFav} color={favColor}/>
                     </div>
-                    {oFav.ok && <div style={{ fontSize:10, color:"var(--color-text-secondary)" }}>
-                      {oFav.s && <span style={{ fontWeight:600, color:parseFloat(oFav.s)<0?"#1a6b3a":"var(--color-text-secondary)", marginRight:6 }}>{parseFloat(oFav.s)>0?"+":""}{oFav.s}</span>}
-                      {oFav.ml && <span style={{ color:"var(--color-text-tertiary)" }}>{oFav.ml}</span>}
-                    </div>}
+                    {oFav.ok && (
+                      <div style={{ fontSize:10, color:"var(--color-text-secondary)" }}>
+                        {oFav.s&&<span style={{ fontWeight:600, color:parseFloat(oFav.s)<0?"#1a6b3a":"var(--color-text-secondary)", marginRight:6 }}>{parseFloat(oFav.s)>0?"+":""}{oFav.s}</span>}
+                        {oFav.ml&&<span style={{ color:"var(--color-text-tertiary)" }}>{oFav.ml}</span>}
+                      </div>
+                    )}
                   </div>
 
                   {/* Underdog */}
@@ -962,30 +978,30 @@ function PicksTab({ onTeamClick }) {
                     <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:4 }}>
                       <span style={{ fontSize:10, background:dogColor+"22", color:dogColor, borderRadius:"50%", width:18, height:18, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:600, flexShrink:0 }}>{m.dog_seed}</span>
                       <span style={{ fontSize:13, fontWeight:600, color:dogColor, cursor:"pointer" }}
-                        onClick={() => { const t = TEAMS.find(t => t.name === m.dog); if(t) onTeamClick(t); }}>
+                        onClick={()=>{const t=TEAMS.find(t=>t.name===m.dog);if(t)onTeamClick(t);}}>
                         {m.dog}
                       </span>
                     </div>
                     <div style={{ marginBottom:4 }}>
                       <div style={{ fontSize:9, color:"var(--color-text-tertiary)", marginBottom:2 }}>jbScore</div>
-                      <MoonBar name={m.dog} score={moonDog} color={dogColor}/>
+                      <JbBar score={jbDog} color={dogColor}/>
                     </div>
-                    {oDog.ok && <div style={{ fontSize:10, color:"var(--color-text-secondary)" }}>
-                      {oDog.s && <span style={{ fontWeight:600, marginRight:6 }}>{parseFloat(oDog.s)>0?"+":""}{oDog.s}</span>}
-                      {oDog.ml && <span style={{ color:"var(--color-text-tertiary)" }}>{oDog.ml}</span>}
-                    </div>}
+                    {oDog.ok && (
+                      <div style={{ fontSize:10, color:"var(--color-text-secondary)" }}>
+                        {oDog.s&&<span style={{ fontWeight:600, marginRight:6 }}>{parseFloat(oDog.s)>0?"+":""}{oDog.s}</span>}
+                        {oDog.ml&&<span style={{ color:"var(--color-text-tertiary)" }}>{oDog.ml}</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Upset score meter */}
+                {/* Upset score + tier + edge pills */}
                 <div style={{ borderTop:"0.5px solid var(--color-border-tertiary)", paddingTop:8 }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                    <span style={{ fontSize:10, color:"var(--color-text-tertiary)" }}>Upset score (dog edge) · Moon gap: {m.jb_delta.toFixed(1)}</span>
-                    {oFav.ou && <span style={{ fontSize:10, color:"var(--color-text-tertiary)" }}>O/U {oFav.ou}</span>}
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4, alignItems:"center" }}>
+                    <span style={{ fontSize:10, fontWeight:500, color:tm.color }}>{tm.label}</span>
+                    {oFav.ou&&<span style={{ fontSize:10, color:"var(--color-text-tertiary)" }}>O/U {oFav.ou}</span>}
                   </div>
                   <UpsetMeter score={m.upset_score}/>
-
-                  {/* Edge pills */}
                   <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginTop:6 }}>
                     <EdgePill value={m.to_edge}     label="TO"/>
                     <EdgePill value={m.threep_edge} label="3P"/>
@@ -995,24 +1011,21 @@ function PicksTab({ onTeamClick }) {
                     <EdgePill value={m.tempo_edge}  label="Pace"/>
                   </div>
                 </div>
-
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Methodology note */}
       <div style={{ marginTop:"1.5rem", padding:"0.875rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)", fontSize:11, color:"var(--color-text-tertiary)", lineHeight:1.65 }}>
-        <strong style={{ color:"var(--color-text-secondary)" }}>Methodology:</strong> jbScore weights 13 KenPom stats normalized to the 2026 tournament field.
-        Upset Score measures possession-volatility advantages for the underdog across 6 dimensions.
-        Edge pills show normalized component scores ≥ ±5 — positive = dog advantage, negative = favorite advantage.
-        <br/><strong style={{ color:"var(--color-text-secondary)" }}>Data:</strong> KenPom subscription via kenpom_scraper.py. O/U and spreads from DraftKings.
-        jbScore does not include KPI, NET, SOR, BartTorvik (separate data sources not yet integrated).
+        <strong style={{ color:"var(--color-text-secondary)" }}>jbScore:</strong> 13 KenPom stats + Barthag, RR, EM Rank, KP Rank — normalized to the 2026 field (0–100). Range this year: 11.3 (Lehigh) – 82.3 (Duke).{" "}
+        <strong style={{ color:"var(--color-text-secondary)" }}>jbGap:</strong> jbScore difference between favorite and underdog. Card header color = heatmap — deep red (toss-up) → blue (blowout likely).{" "}
+        <strong style={{ color:"var(--color-text-secondary)" }}>Upset Score:</strong> possession-volatility composite for the underdog (TO differential 25%, 3P volatility 20%, ORB 20%, FTR 15%, arc defense 10%, tempo 10%).
       </div>
     </div>
   );
 }
+
 
 // ── Root ──────────────────────────────────────────────────────────────────────
 export default function App() {
