@@ -1,3 +1,4 @@
+// build: 2026-03-18 11:19 UTC
 // ─────────────────────────────────────────────────────────────────────────────
 // 2026 NCAA Tournament — Style Classifier + Matchup Explorer
 //
