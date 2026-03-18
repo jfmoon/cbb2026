@@ -144,11 +144,13 @@ function useScores() {
   async function fetchScores() {
     try {
       const r = await fetch("/scores.json?t=" + Date.now());
-      if (!r.ok) return;
+      console.log("[scores] fetch status:", r.status, r.url);
+      if (!r.ok) { console.warn("[scores] not ok:", r.status); return; }
       const data = await r.json();
+      console.log("[scores] loaded", data.games?.length, "games:", data.games?.map(g=>g.t1_name+"/"+g.t2_name));
       setScores(buildLookup(data.games || []));
       setLastUpdate(data.updated || null);
-    } catch { /* scores.json not present yet */ }
+    } catch(e) { console.warn("[scores] fetch error:", e.message); }
   }
 
   useEffect(() => {
@@ -509,7 +511,13 @@ function MatchupsTab({ onTeamClick, scores, lastUpdate }) {
           <option value="First Round">First Round</option>
         </select>
         <span style={{ fontSize:11, color:"var(--color-text-tertiary)" }}>{matchups.length} matchup{matchups.length!==1?"s":""}</span>
-        {lastUpdate && <span style={{ fontSize:10, color:"var(--color-text-tertiary)", marginLeft:"auto" }}>Scores {new Date(lastUpdate).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>}
+        <span style={{ fontSize:10, color:"var(--color-text-tertiary)", marginLeft:"auto" }}>
+          {lastUpdate
+            ? `Scores updated ${new Date(lastUpdate).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}`
+            : Object.keys(scores).length > 0
+              ? `${Object.keys(scores).length} scores loaded`
+              : "scores pending"}
+        </span>
       </div>
 
       {/* Matchup groups */}
@@ -525,7 +533,7 @@ function MatchupsTab({ onTeamClick, scores, lastUpdate }) {
               </span>
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:"0.75rem" }}>
-              {games.map((m, i) => <MatchupCard key={i} matchup={m} onTeamClick={onTeamClick}/>)}
+              {games.map((m, i) => <MatchupCard key={i} matchup={m} onTeamClick={onTeamClick} scores={scores}/>)}
             </div>
           </div>
         );
