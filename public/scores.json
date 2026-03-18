@@ -3,31 +3,31 @@
   "game_count": 2,
   "games": [
     {
-      "espn_id": "401856434",
-      "name": "Texas Longhorns at NC State Wolfpack",
-      "date": "2026-03-18",
-      "state": "post",
-      "detail": "Final",
-      "completed": true,
-      "t1_name": "NC State Wolfpack",
-      "t1_score": 66,
-      "t1_winner": false,
-      "t2_name": "Texas Longhorns",
-      "t2_score": 68,
-      "t2_winner": true
-    },
-    {
       "espn_id": "401856435",
-      "name": "UMBC Retrievers at Howard Bison",
+      "name": "UMBC vs Howard",
       "date": "2026-03-17",
       "state": "post",
       "detail": "Final",
       "completed": true,
-      "t1_name": "Howard Bison",
+      "t1_name": "Howard",
       "t1_score": 86,
       "t1_winner": true,
-      "t2_name": "UMBC Retrievers",
+      "t2_name": "UMBC",
       "t2_score": 83,
+      "t2_winner": false
+    },
+    {
+      "espn_id": "401856434",
+      "name": "Texas vs NC State",
+      "date": "2026-03-17",
+      "state": "post",
+      "detail": "Final",
+      "completed": true,
+      "t1_name": "Texas",
+      "t1_score": 68,
+      "t1_winner": true,
+      "t2_name": "NC State",
+      "t2_score": 66,
       "t2_winner": false
     }
   ]
