@@ -794,23 +794,27 @@ function PicksTab({ onTeamClick }) {
   // Heatmap: jbDelta -5 → 0 = deep red (hottest), 0→15 = orange, 15→30 = amber,
   //          30→45 = yellow-green, 45→65 = teal/blue (coolest)
   function gapColor(delta) {
-    if (delta < 0)  return { bg:"#7f1d1d", text:"#fca5a5", border:"#991b1b" }; // deep red
-    if (delta < 5)  return { bg:"#991b1b", text:"#fecaca", border:"#b91c1c" }; // red
-    if (delta < 12) return { bg:"#c2410c", text:"#fed7aa", border:"#ea580c" }; // orange
-    if (delta < 20) return { bg:"#b45309", text:"#fde68a", border:"#d97706" }; // amber
-    if (delta < 30) return { bg:"#4d7c0f", text:"#d9f99d", border:"#65a30d" }; // yellow-green
-    if (delta < 45) return { bg:"#0f766e", text:"#99f6e4", border:"#0d9488" }; // teal
-    return             { bg:"#1d4ed8", text:"#bfdbfe", border:"#3b82f6" };     // blue (coldest)
+    if (delta < -10) return { bg:"#7f1d1d", text:"#fca5a5", border:"#991b1b" }; // deep red
+    if (delta < 0)   return { bg:"#b91c1c", text:"#fecaca", border:"#dc2626" }; // red
+    if (delta < 5)   return { bg:"#c2410c", text:"#fed7aa", border:"#ea580c" }; // orange
+    if (delta < 8)   return { bg:"#b45309", text:"#fde68a", border:"#d97706" }; // amber
+    if (delta < 13)  return { bg:"#854d0e", text:"#fef08a", border:"#ca8a04" }; // dark amber
+    if (delta < 17)  return { bg:"#3f6212", text:"#d9f99d", border:"#65a30d" }; // yellow-green
+    if (delta < 23)  return { bg:"#166534", text:"#bbf7d0", border:"#16a34a" }; // green
+    if (delta < 35)  return { bg:"#0f766e", text:"#99f6e4", border:"#0d9488" }; // teal
+    return              { bg:"#1d4ed8", text:"#bfdbfe", border:"#3b82f6" };     // blue
   }
 
   function gapLabel(delta) {
-    if (delta < 0)  return "Toss-up";
-    if (delta < 5)  return "Razor thin";
-    if (delta < 12) return "Narrow gap";
-    if (delta < 20) return "Moderate gap";
-    if (delta < 30) return "Clear gap";
-    if (delta < 45) return "Large gap";
-    return "Blowout likely";
+    if (delta < -10) return "🔥 Upset city";
+    if (delta < 0)   return "⚡ Upset potential";
+    if (delta < 5)   return "Coin flip";
+    if (delta < 8)   return "Razor thin";
+    if (delta < 13)  return "Narrow gap";
+    if (delta < 17)  return "Moderate gap";
+    if (delta < 23)  return "Clear gap";
+    if (delta < 35)  return "Blowout potential";
+    return "Blowout city";
   }
 
   const TIER_META = {
@@ -890,7 +894,7 @@ function PicksTab({ onTeamClick }) {
           <div style={{ flex:1, minWidth:180 }}>
             <p style={{ margin:"0 0 3px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>jbGap heatmap</p>
             <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:4 }}>
-              {[[-5,"Toss-up"],[5,"Razor thin"],[12,"Narrow"],[20,"Moderate"],[30,"Clear"],[45,"Large"],[55,"Blowout"]].map(([d,l])=>{
+              {[[-15,"Upset city"],[-5,"Upset potential"],[2,"Coin flip"],[6,"Razor thin"],[10,"Narrow"],[15,"Moderate"],[20,"Clear"],[28,"Blowout potential"],[40,"Blowout city"]].map(([d,l])=>{
                 const c = gapColor(d);
                 return <span key={l} style={{ fontSize:9, padding:"2px 6px", borderRadius:4, background:c.bg, color:c.text, border:`1px solid ${c.border}` }}>{l}</span>;
               })}
