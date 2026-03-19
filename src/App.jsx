@@ -944,7 +944,7 @@ function GlossaryTab() {
 //   Source: KenPom scraped stats (kenpom_scraper.py)
 
 
-function TeamPicker({ label, selected, search, setSearch, focused, setFocused, onSelect, onClear, filteredTeams }) {
+function TeamPicker({ label, selected, search, setSearch, focused, setFocused, onSelect, onClear, filteredTeams, jbScore }) {
   return (
     <div style={{ flex:1, minWidth:0 }}>
       <div style={{ fontSize:10, fontWeight:600, color:"var(--color-text-tertiary)",
@@ -974,8 +974,7 @@ function TeamPicker({ label, selected, search, setSearch, focused, setFocused, o
               <div style={{ display:"flex", gap:12, marginTop:8, fontSize:11, color:"var(--color-text-secondary)" }}>
                 <span>Barthag <b>{selected.barthag?.toFixed(3)}</b></span>
                 {selected.rr != null && <span>RR <b>{selected.rr?.toFixed(1)}</b></span>}
-                {jbA != null && label === "Team A" && <span>jbScore <b style={{ color:ARCH_MAP[selected.archetype]?.color }}>{jbA?.toFixed(1)}</b></span>}
-                {jbB != null && label === "Team B" && <span>jbScore <b style={{ color:ARCH_MAP[selected.archetype]?.color }}>{jbB?.toFixed(1)}</b></span>}
+                {jbScore != null && <span>jbScore <b style={{ color:ARCH_MAP[selected.archetype]?.color }}>{jbScore.toFixed(1)}</b></span>}
               </div>
             )}
           </div>
@@ -1059,12 +1058,12 @@ function CompareTab({ onTeamClick }) {
       <div style={{ display:"flex", gap:12, marginBottom:"1.5rem", alignItems:"flex-start" }}>
         <TeamPicker label="Team A" selected={teamA} search={searchA} setSearch={setSearchA}
           focused={focusA} setFocused={setFocusA} onSelect={setTeamA} onClear={() => setTeamA(null)}
-          filteredTeams={filteredA}/>
+          filteredTeams={filteredA} jbScore={jbA}/>
         <div style={{ display:"flex", alignItems:"center", paddingTop: teamA || teamB ? 44 : 30,
           fontSize:13, fontWeight:600, color:"var(--color-text-tertiary)", flexShrink:0 }}>vs</div>
         <TeamPicker label="Team B" selected={teamB} search={searchB} setSearch={setSearchB}
           focused={focusB} setFocused={setFocusB} onSelect={setTeamB} onClear={() => setTeamB(null)}
-          filteredTeams={filteredB}/>
+          filteredTeams={filteredB} jbScore={jbB}/>
       </div>
 
       {/* Empty state */}
