@@ -471,8 +471,24 @@ function MatchupCard({ matchup, onTeamClick, scores, odds }) {
         </div>
       )}
 
+      {/* Expand/collapse toggle */}
+      {team1 && team2 && (
+        <div onClick={() => setExpanded(e => !e)}
+          style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:5,
+            padding:"5px 12px", cursor:"pointer",
+            borderTop:"0.5px solid var(--color-border-tertiary)",
+            background:"var(--color-background-secondary)",
+            color:"var(--color-text-tertiary)", fontSize:11, fontWeight:500,
+            userSelect:"none" }}>
+          <span>{expanded ? "Hide attributes" : "Show attributes"}</span>
+          <span style={{ fontSize:16, lineHeight:1, display:"inline-block",
+            transform: expanded ? "rotate(-90deg)" : "rotate(90deg)",
+            transition:"transform 0.15s" }}>›</span>
+        </div>
+      )}
+
       {/* Butterfly bars */}
-      {(team1 && team2) && (
+      {(team1 && team2) && expanded && (
         <div>
           {KEY_ATTRS.map(a => {
             const v1 = team1?.[a.key] ?? null;
