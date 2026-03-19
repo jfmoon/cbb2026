@@ -150,7 +150,7 @@ function useScores() {
 
   async function fetchScores() {
     try {
-      const r = await fetch("https://storage.googleapis.com/cbb-scores-490420/scores.json?t=" + Date.now());
+      const r = await fetch("/scores.json?t=" + Date.now());
       console.log("[scores] fetch status:", r.status, r.url);
       if (!r.ok) { console.warn("[scores] not ok:", r.status); return; }
       const data = await r.json();
