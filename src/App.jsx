@@ -243,7 +243,14 @@ const TEAMS_WITH_CP = TEAM_DATA.teams.map(t => ({
 }));
 const TEAMS_MAP = Object.fromEntries(TEAMS_WITH_CP.map(t => [t.id, t]));
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ─────
+const fmt12h = t => {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12  = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2,"0")} ${ampm}`;
+};
 const f1 = v => v != null ? v.toFixed(1) : "—";
 
 function ArchetypePill({ id, small }) {
@@ -438,7 +445,7 @@ function MatchupCard({ matchup, onTeamClick, scores, odds }) {
       <div style={{ background:"var(--color-background-secondary)", padding:"6px 12px", display:"flex", alignItems:"center", gap:8, borderBottom:"0.5px solid var(--color-border-tertiary)", flexWrap:"wrap" }}>
         {matchup.is_ff && <Tag label="First Four" color="#b45309"/>}
         <span style={{ fontSize:11, color:"var(--color-text-secondary)", fontWeight:500 }}>{site}</span>
-        <span style={{ fontSize:10, color:"var(--color-text-tertiary)" }}>{date}{time?" · "+time+" ET":""}</span>
+        <span style={{ fontSize:10, color:"var(--color-text-tertiary)" }}>{date}{time?" · "+fmt12h(time)+" ET":""}</span>
       </div>
 
       {/* Team name headers side by side */}
@@ -1403,7 +1410,7 @@ function PicksTab({ onTeamClick, scores }) {
                   jbGap {m.jb_delta.toFixed(1)} — {gapLabel(m.jb_delta)}
                 </span>
                 <span style={{ fontSize:10, color:gc.text, opacity:0.75, marginLeft:"auto" }}>
-                  {m.region} · {m.site} · {m.date}{m.time && <span style={{ fontWeight:600, color:"var(--color-text-secondary)", marginLeft:4 }}> · {m.time} ET</span>}
+                  {m.region} · {m.site} · {m.date}{m.time && <span style={{ fontWeight:600, color:"var(--color-text-secondary)", marginLeft:4 }}> · {fmt12h(m.time)} ET</span>}
                 </span>
               </div>
 
