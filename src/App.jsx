@@ -1262,6 +1262,7 @@ function PicksTab({ onTeamClick }) {
     if (sortBy === "jb_delta")   d.sort((a,b) => a.jb_delta   - b.jb_delta);
     if (sortBy === "seed_gap")   d.sort((a,b) => (b.dog_seed - b.fav_seed) - (a.dog_seed - a.fav_seed));
     if (sortBy === "region")     d.sort((a,b) => a.region.localeCompare(b.region));
+    if (sortBy === "time")       d.sort((a,b) => (a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
     return d;
   }, [sortBy, filterRegion, filterTier]);
 
