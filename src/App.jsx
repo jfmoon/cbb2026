@@ -426,8 +426,9 @@ function MatchupCard({ matchup, onTeamClick, scores, odds }) {
 
   // Odds strip between the two team headers
   const hasOdds = o1?.ok || o2?.ok;
-  const sprd1 = o1?.ok && o1.s && o1.s !== "TBD" ? `${parseFloat(o1.s)>0?"+":""}${o1.s}` : null;
-  const sprd2 = o2?.ok && o2.s && o2.s !== "TBD" ? `${parseFloat(o2.s)>0?"+":""}${o2.s}` : null;
+  const fmtSpread = s => { if(!s||s==="TBD") return null; const n=parseFloat(s); return isNaN(n)?null:(n>0?`+${n}`:String(n)); };
+  const sprd1 = o1?.ok && o1.s ? fmtSpread(o1.s) : null;
+  const sprd2 = o2?.ok && o2.s ? fmtSpread(o2.s) : null;
 
   return (
     <div style={{ border:"0.5px solid var(--color-border-tertiary)", borderRadius:12, overflow:"hidden" }}>
