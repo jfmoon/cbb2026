@@ -1,5 +1,5 @@
 {
-  "updated": "2026-03-19T01:16:46Z",
+  "updated": "2026-03-19T10:58:58Z",
   "game_count": 4,
   "games": [
     {
@@ -44,14 +44,14 @@
     {
       "espn_id": "401856436",
       "date": "2026-03-18",
-      "state": "pre",
-      "detail": "9:15 PM ET",
-      "completed": false,
-      "t1_name": "SMU",
-      "t1_score": 0,
-      "t1_winner": false,
-      "t2_name": "Miami (Ohio)",
-      "t2_score": 0,
+      "state": "post",
+      "detail": "Final",
+      "completed": true,
+      "t1_name": "Miami (Ohio)",
+      "t1_score": 89,
+      "t1_winner": true,
+      "t2_name": "SMU",
+      "t2_score": 79,
       "t2_winner": false
     }
   ]
