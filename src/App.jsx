@@ -534,16 +534,24 @@ function MatchupCard({ matchup, onTeamClick, scores, odds }) {
 
 // ── Matchups Tab ──────────────────────────────────────────────────────────────
 function MatchupsTab({ onTeamClick, scores, lastUpdate, odds }) {
-  const [filterRegion, setFilterRegion] = useState("All");
-  const [filterRound,  setFilterRound]  = useState("All");
-  const [sortBy,       setSortBy]       = useState("region");
+  const [filterRegion,  setFilterRegion]  = useState("All");
+  const [filterRound,   setFilterRound]   = useState("All");
+  const [sortBy,        setSortBy]        = useState("region");
+  const [hideFinished,  setHideFinished]  = useState(false);
 
   const matchups = useMemo(() => {
-    const filtered = MATCHUP_DATA.filter(m => {
+    let filtered = MATCHUP_DATA.filter(m => {
       if (filterRegion !== "All" && m.region !== filterRegion) return false;
       if (filterRound  !== "All" && m.round  !== filterRound)  return false;
       return true;
     });
+    // Hide games that have a completed result in scores
+    if (hideFinished) {
+      filtered = filtered.filter(m => {
+        const s1 = scores?.[m.team1_name];
+        return !s1?.some(r => r.state === "post" && r.date === m.date);
+      });
+    }
     if (sortBy === "time") {
       return [...filtered].sort((a,b) => {
         const da = a.date + (a.time||"99:99"), db = b.date + (b.time||"99:99");
@@ -551,7 +559,7 @@ function MatchupsTab({ onTeamClick, scores, lastUpdate, odds }) {
       });
     }
     return filtered;
-  }, [filterRegion, filterRound, sortBy]);
+  }, [filterRegion, filterRound, sortBy, hideFinished, scores]);
 
   // Group by region (or flat list for time sort)
   const grouped = useMemo(() => {
@@ -589,6 +597,13 @@ function MatchupsTab({ onTeamClick, scores, lastUpdate, odds }) {
           <option value="region">Group by region</option>
           <option value="time">Sort by time</option>
         </select>
+        <button onClick={()=>setHideFinished(h=>!h)}
+          style={{ fontSize:11, padding:"5px 9px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)",
+            background: hideFinished ? "var(--color-background-info)" : "var(--color-background-primary)",
+            color: hideFinished ? "var(--color-text-info)" : "var(--color-text-secondary)",
+            cursor:"pointer", fontWeight: hideFinished ? 500 : 400 }}>
+          {hideFinished ? "✓ Hiding finished" : "Hide finished"}
+        </button>
         <span style={{ fontSize:11, color:"var(--color-text-tertiary)" }}>{matchups.length} matchup{matchups.length!==1?"s":""}</span>
         <span style={{ fontSize:10, color:"var(--color-text-tertiary)", marginLeft:"auto" }}>
           {lastUpdate
@@ -1264,7 +1279,6 @@ function PicksTab({ onTeamClick, scores }) {
     if (sortBy === "seed_gap")   d.sort((a,b) => (b.dog_seed - b.fav_seed) - (a.dog_seed - a.fav_seed));
     if (sortBy === "region")     d.sort((a,b) => a.region.localeCompare(b.region));
     if (sortBy === "time")       d.sort((a,b) => (a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
-    return hideFinished ? d.filter(m => !scores?.[m.fav]?.some(r=>r.state==="post"&&r.date===m.date)) : d;
     return hideFinished ? d.filter(m => !scores?.[m.fav]?.some(r=>r.state==="post"&&r.date===m.date)) : d;
   }, [sortBy, filterRegion, filterTier, hideFinished, scores]);
 
