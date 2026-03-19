@@ -378,6 +378,7 @@ function formatML(ml){
 }
 
 function MatchupCard({ matchup, onTeamClick, scores, odds }) {
+  const [expanded, setExpanded] = useState(false);
   const { team1, team2, site, date, time } = matchup;
   const a1 = team1 ? ARCH_MAP[team1.archetype] : null;
   const a2 = team2 ? ARCH_MAP[team2.archetype] : null;
