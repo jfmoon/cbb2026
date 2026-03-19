@@ -536,15 +536,28 @@ function MatchupCard({ matchup, onTeamClick, scores, odds }) {
 function MatchupsTab({ onTeamClick, scores, lastUpdate, odds }) {
   const [filterRegion, setFilterRegion] = useState("All");
   const [filterRound,  setFilterRound]  = useState("All");
+  const [sortBy,       setSortBy]       = useState("region");
 
-  const matchups = useMemo(() => MATCHUP_DATA.filter(m => {
-    if (filterRegion !== "All" && m.region !== filterRegion) return false;
-    if (filterRound  !== "All" && m.round  !== filterRound)  return false;
-    return true;
-  }), [filterRegion, filterRound]);
+  const matchups = useMemo(() => {
+    const filtered = MATCHUP_DATA.filter(m => {
+      if (filterRegion !== "All" && m.region !== filterRegion) return false;
+      if (filterRound  !== "All" && m.round  !== filterRound)  return false;
+      return true;
+    });
+    if (sortBy === "time") {
+      return [...filtered].sort((a,b) => {
+        const da = a.date + (a.time||"99:99"), db = b.date + (b.time||"99:99");
+        return da.localeCompare(db);
+      });
+    }
+    return filtered;
+  }, [filterRegion, filterRound, sortBy]);
 
-  // Group by region
+  // Group by region (or flat list for time sort)
   const grouped = useMemo(() => {
+    if (sortBy === "time") {
+      return { "By Time": matchups };
+    }
     const g = {};
     for (const m of matchups) {
       const key = m.round === "First Four" ? "First Four" : m.region;
@@ -552,9 +565,9 @@ function MatchupsTab({ onTeamClick, scores, lastUpdate, odds }) {
       g[key].push(m);
     }
     return g;
-  }, [matchups]);
+  }, [matchups, sortBy]);
 
-  const sectionOrder = ["First Four", ...REGIONS];
+  const sectionOrder = sortBy === "time" ? ["By Time"] : ["First Four", ...REGIONS];
 
   return (
     <div>
@@ -570,6 +583,11 @@ function MatchupsTab({ onTeamClick, scores, lastUpdate, odds }) {
           <option value="All">All Rounds</option>
           <option value="First Four">First Four</option>
           <option value="First Round">First Round</option>
+        </select>
+        <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
+          style={{ fontSize:12, padding:"5px 7px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-primary)", color:"var(--color-text-primary)" }}>
+          <option value="region">Group by region</option>
+          <option value="time">Sort by time</option>
         </select>
         <span style={{ fontSize:11, color:"var(--color-text-tertiary)" }}>{matchups.length} matchup{matchups.length!==1?"s":""}</span>
         <span style={{ fontSize:10, color:"var(--color-text-tertiary)", marginLeft:"auto" }}>
@@ -588,9 +606,9 @@ function MatchupsTab({ onTeamClick, scores, lastUpdate, odds }) {
         return (
           <div key={section} style={{ marginBottom:"1.5rem" }}>
             <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:"0.75rem" }}>
-              {section !== "First Four" && <span style={{ width:8, height:8, borderRadius:"50%", background:REGION_COLORS[section]||"#888", display:"inline-block", flexShrink:0 }}/>}
-              <span style={{ fontSize:13, fontWeight:600, color:section==="First Four"?"#b45309":REGION_COLORS[section]||"var(--color-text-primary)" }}>
-                {section === "First Four" ? "First Four — Dayton, OH" : `${section} Region`}
+              {section !== "First Four" && section !== "By Time" && <span style={{ width:8, height:8, borderRadius:"50%", background:REGION_COLORS[section]||"#888", display:"inline-block", flexShrink:0 }}/>}
+              <span style={{ fontSize:13, fontWeight:600, color:section==="First Four"?"#b45309":section==="By Time"?"var(--color-text-secondary)":REGION_COLORS[section]||"var(--color-text-primary)" }}>
+                {section === "First Four" ? "First Four — Dayton, OH" : section === "By Time" ? `${matchups.length} games by tip-off time` : `${section} Region`}
               </span>
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:"0.75rem" }}>
@@ -911,41 +929,7 @@ function GlossaryTab() {
 //   Source: KenPom scraped stats (kenpom_scraper.py)
 
 
-// ── Compare Tab ───────────────────────────────────────────────────────────────
-function CompareTab({ onTeamClick }) {
-  const [teamA, setTeamA] = useState(null);
-  const [teamB, setTeamB] = useState(null);
-  const [searchA, setSearchA] = useState("");
-  const [searchB, setSearchB] = useState("");
-  const [focusA, setFocusA] = useState(false);
-  const [focusB, setFocusB] = useState(false);
-
-  const ALL_ATTRS = [
-    { key:"off_efficiency",   label:"Off Efficiency",  short:"AdjO" },
-    { key:"def_efficiency",   label:"Def Efficiency",  short:"AdjD" },
-    { key:"three_pt_prowess", label:"3PT Shooting",    short:"3PT"  },
-    { key:"free_throw_gen",   label:"FT Generation",   short:"FTG"  },
-    { key:"ball_security",    label:"Ball Security",   short:"TO"   },
-    { key:"off_rebounding",   label:"Off Rebounding",  short:"ORB"  },
-    { key:"rim_protection",   label:"Rim Protection",  short:"BLK"  },
-    { key:"pressure_defense", label:"Press Defense",   short:"STL"  },
-    { key:"opp_3pt_allowed",  label:"Arc Defense",     short:"3PD"  },
-    { key:"experience",       label:"Experience",      short:"EXP"  },
-  ];
-
-  const filteredA = useMemo(() =>
-    TEAMS_WITH_CP.filter(t => t.name.toLowerCase().includes(searchA.toLowerCase())).slice(0,8),
-  [searchA]);
-  const filteredB = useMemo(() =>
-    TEAMS_WITH_CP.filter(t => t.name.toLowerCase().includes(searchB.toLowerCase())).slice(0,8),
-  [searchB]);
-
-  const archA = teamA ? ARCH_MAP[teamA.archetype] : null;
-  const archB = teamB ? ARCH_MAP[teamB.archetype] : null;
-  const jbA   = teamA ? JB_DATA[teamA.name]?.jb : null;
-  const jbB   = teamB ? JB_DATA[teamB.name]?.jb : null;
-
-  const TeamPicker = ({ label, selected, search, setSearch, focused, setFocused, onSelect, onClear }) => (
+function TeamPicker({ label, selected, search, setSearch, focused, setFocused, onSelect, onClear, filteredTeams }) {
     <div style={{ flex:1, minWidth:0 }}>
       <div style={{ fontSize:10, fontWeight:600, color:"var(--color-text-tertiary)",
         textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:6 }}>{label}</div>
@@ -996,7 +980,7 @@ function CompareTab({ onTeamClick }) {
             <div style={{ position:"absolute", top:"100%", left:0, right:0, zIndex:100,
               background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-secondary)",
               borderRadius:8, marginTop:4, boxShadow:"0 4px 20px rgba(0,0,0,0.15)", overflow:"hidden" }}>
-              {(label === "Team A" ? filteredA : filteredB).map(t => (
+              {filteredTeams.map(t => (
                 <div key={t.id} onMouseDown={() => { onSelect(t); setSearch(""); setFocused(false); }}
                   style={{ padding:"8px 12px", cursor:"pointer", display:"flex", alignItems:"center",
                     gap:8, borderBottom:"0.5px solid var(--color-border-tertiary)" }}
@@ -1008,7 +992,7 @@ function CompareTab({ onTeamClick }) {
                   <ArchetypePill id={t.archetype} small/>
                 </div>
               ))}
-              {(label === "Team A" ? filteredA : filteredB).length === 0 && (
+              {filteredTeams.length === 0 && (
                 <div style={{ padding:"12px", fontSize:12, color:"var(--color-text-tertiary)", textAlign:"center" }}>No teams found</div>
               )}
             </div>
@@ -1016,18 +1000,56 @@ function CompareTab({ onTeamClick }) {
         </div>
       )}
     </div>
-  );
+  
+}
+
+// ── Compare Tab ───────────────────────────────────────────────────────────────
+function CompareTab({ onTeamClick }) {
+  const [teamA, setTeamA] = useState(null);
+  const [teamB, setTeamB] = useState(null);
+  const [searchA, setSearchA] = useState("");
+  const [searchB, setSearchB] = useState("");
+  const [focusA, setFocusA] = useState(false);
+  const [focusB, setFocusB] = useState(false);
+
+  const ALL_ATTRS = [
+    { key:"off_efficiency",   label:"Off Efficiency",  short:"AdjO" },
+    { key:"def_efficiency",   label:"Def Efficiency",  short:"AdjD" },
+    { key:"three_pt_prowess", label:"3PT Shooting",    short:"3PT"  },
+    { key:"free_throw_gen",   label:"FT Generation",   short:"FTG"  },
+    { key:"ball_security",    label:"Ball Security",   short:"TO"   },
+    { key:"off_rebounding",   label:"Off Rebounding",  short:"ORB"  },
+    { key:"rim_protection",   label:"Rim Protection",  short:"BLK"  },
+    { key:"pressure_defense", label:"Press Defense",   short:"STL"  },
+    { key:"opp_3pt_allowed",  label:"Arc Defense",     short:"3PD"  },
+    { key:"experience",       label:"Experience",      short:"EXP"  },
+  ];
+
+  const filteredA = useMemo(() =>
+    TEAMS_WITH_CP.filter(t => t.name.toLowerCase().includes(searchA.toLowerCase())).slice(0,8),
+  [searchA]);
+  const filteredB = useMemo(() =>
+    TEAMS_WITH_CP.filter(t => t.name.toLowerCase().includes(searchB.toLowerCase())).slice(0,8),
+  [searchB]);
+
+  const archA = teamA ? ARCH_MAP[teamA.archetype] : null;
+  const archB = teamB ? ARCH_MAP[teamB.archetype] : null;
+  const jbA   = teamA ? JB_DATA[teamA.name]?.jb : null;
+  const jbB   = teamB ? JB_DATA[teamB.name]?.jb : null;
+
 
   return (
     <div>
       {/* Team pickers */}
       <div style={{ display:"flex", gap:12, marginBottom:"1.5rem", alignItems:"flex-start" }}>
         <TeamPicker label="Team A" selected={teamA} search={searchA} setSearch={setSearchA}
-          focused={focusA} setFocused={setFocusA} onSelect={setTeamA} onClear={() => setTeamA(null)}/>
+          focused={focusA} setFocused={setFocusA} onSelect={setTeamA} onClear={() => setTeamA(null)}
+          filteredTeams={filteredA}/>
         <div style={{ display:"flex", alignItems:"center", paddingTop: teamA || teamB ? 44 : 30,
           fontSize:13, fontWeight:600, color:"var(--color-text-tertiary)", flexShrink:0 }}>vs</div>
         <TeamPicker label="Team B" selected={teamB} search={searchB} setSearch={setSearchB}
-          focused={focusB} setFocused={setFocusB} onSelect={setTeamB} onClear={() => setTeamB(null)}/>
+          focused={focusB} setFocused={setFocusB} onSelect={setTeamB} onClear={() => setTeamB(null)}
+          filteredTeams={filteredB}/>
       </div>
 
       {/* Empty state */}
