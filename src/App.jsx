@@ -150,7 +150,7 @@ function useScores() {
 
   async function fetchScores() {
     try {
-      const r = await fetch("https://storage.googleapis.com/cbb-scores-490420/scores.json?t=" + Date.now());
+      const r = await fetch("https://storage.googleapis.com/cbb-scores-490420/scores.json?t=" + Date.now(), { cache: "no-store" });
       console.log("[scores] fetch status:", r.status, r.url);
       if (!r.ok) { console.warn("[scores] not ok:", r.status); return; }
       const data = await r.json();
@@ -162,7 +162,7 @@ function useScores() {
 
   useEffect(() => {
     fetchScores();
-    timerRef.current = setInterval(fetchScores, 2 * 60 * 60 * 1000);
+    timerRef.current = setInterval(fetchScores, 10 * 60 * 1000); // 10 min during tournament
     return () => clearInterval(timerRef.current);
   }, []);
 
