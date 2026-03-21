@@ -24,8 +24,8 @@ const _css = `
   --color-text-info:           #1d4ed8;
   --color-border-secondary:    rgba(0,0,0,0.18);
   --color-border-tertiary:     rgba(0,0,0,0.10);
-  --color-background-primary:  #ffffff;
-  --color-background-secondary:#f9fafb;
+  --color-background-primary:  #fff8f3;
+  --color-background-secondary:#fef0e6;
   --color-background-info:     #eff6ff;
   --border-radius-md:          8px;
   --border-radius-lg:          12px;
@@ -39,8 +39,8 @@ const _css = `
     --color-text-info:           #93c5fd;
     --color-border-secondary:    rgba(255,255,255,0.18);
     --color-border-tertiary:     rgba(255,255,255,0.10);
-    --color-background-primary:  #111827;
-    --color-background-secondary:#1f2937;
+    --color-background-primary:  #1a1008;
+    --color-background-secondary:#261608;
     --color-background-info:     #1e3a5f;
   }
 }
@@ -750,6 +750,7 @@ function ClassifierTab({ onTeamClick, scores }) {
           <option value="First Four">First Four</option>
         </select>
         <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={{ fontSize:12,padding:"5px 7px",borderRadius:6,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-primary)",color:"var(--color-text-primary)" }}>
+          <option value="kenpom">KenPom / EM Rank</option>
           <option value="seed">Seed</option>
           <option value="rr">EvanMiya RR</option>
           <option value="barthag">Barthag</option>
@@ -945,6 +946,62 @@ function GlossaryTab() {
             <p style={{margin:0,fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.65}}>{s.desc}</p>
           </Card>
         ))}
+      </Section>
+
+      <Section title="Picks & Analysis models">
+        <Card accent="#1d4ed8">
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)",fontFamily:"monospace"}}>jbScore</span>
+            <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Team Quality Baseline</span>
+            <span style={{marginLeft:"auto",fontSize:10,color:"var(--color-text-tertiary)"}}>0–100 · KenPom + EvanMiya</span>
+          </div>
+          <p style={{margin:"0 0 8px",fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.65}}>
+            Composite team quality score, normalized to the 2026 tournament field (not all of D-1). Every input stat is min-max scaled across the 68-team field before weighting, so 50.0 is exactly field median.
+          </p>
+          <div style={{fontSize:11,color:"var(--color-text-tertiary)",lineHeight:1.8}}>
+            <div style={{display:"flex",flexWrap:"wrap",gap:"2px 20px"}}>
+              {[["AdjO","15%","Adjusted offensive efficiency"],["AdjD","10%","Adjusted defensive efficiency (inv)"],["NetRTG","10%","AdjO − AdjD"],["3P%","10%","Three-point percentage"],["3PAr","7%","Three-point attempt rate"],["FTR","7%","Free throw rate"],["TO%","7%","Turnover rate (inverted)"],["Steal%","5%","Steal percentage"],["Barthag","8%","EvanMiya power rating"],["RR","7%","EvanMiya resume rating"],["EM Rank","8%","EvanMiya rank (inv)"],["KP Rank","6%","KenPom rank (inv)"]].map(([stat,wt,desc])=>(
+                <span key={stat} style={{whiteSpace:"nowrap"}}><b style={{color:"var(--color-text-secondary)"}}>{stat}</b> {wt} — {desc}</span>
+              ))}
+            </div>
+          </div>
+          <p style={{margin:"8px 0 0",fontSize:11,color:"var(--color-text-tertiary)"}}>2026 range: 11.3 (Lehigh) → 82.3 (Duke). Teams without KenPom data use a Barthag-only fallback: Barthag × 45.</p>
+        </Card>
+
+        <Card accent="#0f766e">
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)",fontFamily:"monospace"}}>jbGap</span>
+            <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Matchup Quality Differential</span>
+            <span style={{marginLeft:"auto",fontSize:10,color:"var(--color-text-tertiary)"}}>jbScore(fav) − jbScore(dog)</span>
+          </div>
+          <p style={{margin:"0 0 8px",fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.65}}>
+            The gap between the favorite's and underdog's jbScore. Smaller gap = closer game on paper = more upset-dangerous. Used as the heatmap color on every card in the Picks tab. Calibrated to the 2026 field (mean 24.1, stdev 19.8).
+          </p>
+          <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
+            {[[-2,"#b91c1c","#fecaca","Pick the dog"],[2,"#c2410c","#fed7aa","Coin flip"],[6,"#854d0e","#fef08a","Danger zone"],[10,"#b45309","#fde68a","Live underdog"],[15,"#3f6212","#d9f99d","Moderate gap"],[20,"#166534","#bbf7d0","Lean favorite"],[28,"#0f766e","#99f6e4","Chalk"],[40,"#1d4ed8","#bfdbfe","Blowout city"]].map(([,bg,text,label])=>(
+              <span key={label} style={{fontSize:10,padding:"2px 7px",borderRadius:4,background:bg,color:text,fontWeight:500}}>{label}</span>
+            ))}
+          </div>
+        </Card>
+
+        <Card accent="#dc2626">
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+            <span style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)",fontFamily:"monospace"}}>Upset Score</span>
+            <span style={{fontSize:13,color:"var(--color-text-secondary)"}}>Possession-Volatility Edge</span>
+            <span style={{marginLeft:"auto",fontSize:10,color:"var(--color-text-tertiary)"}}>−25 to +25 · positive = dog edge</span>
+          </div>
+          <p style={{margin:"0 0 8px",fontSize:12,color:"var(--color-text-secondary)",lineHeight:1.65}}>
+            Measures the statistical edges that generate upset probability — specifically the volatile, possession-level mismatches that can swing a single-game elimination. Positive score means the underdog has meaningful advantages. Each component is scaled to roughly −1/+1 before weighting.
+          </p>
+          <div style={{fontSize:11,color:"var(--color-text-tertiary)",lineHeight:1.8}}>
+            <div style={{display:"flex",flexWrap:"wrap",gap:"2px 20px"}}>
+              {[["Turnover Differential","25%","(dog.steal − dog.TO%) vs (fav.steal − fav.TO%) ÷ 15"],["3P Volatility","20%","(dog.3PAr×dog.3P% − fav.3PAr×fav.3P%) ÷ 0.14"],["Offensive Rebounding","20%","(dog.ORB − fav.ORB) ÷ 23"],["FTR Edge","15%","(dog.FTR − fav.FTR) ÷ 25"],["Arc Defense Edge","10%","(fav.Opp3P% − dog.Opp3P%) ÷ 8"],["Tempo Edge","10%","(dog.AdjT − fav.AdjT) ÷ 11"]].map(([comp,wt,calc])=>(
+                <span key={comp} style={{whiteSpace:"nowrap"}}><b style={{color:"var(--color-text-secondary)"}}>{comp}</b> {wt} — {calc}</span>
+              ))}
+            </div>
+          </div>
+          <p style={{margin:"8px 0 0",fontSize:11,color:"var(--color-text-tertiary)"}}>2026 range: −24.3 to +16.1. Strong candidate threshold: above +10. R64 hit rate on strong candidates (above +11): 3 of 3 (100%).</p>
+        </Card>
       </Section>
 
       <Section title="Methodology">
@@ -1272,6 +1329,18 @@ function PicksTab({ onTeamClick, scores, odds }) {
   const [hideFinished, setHideFinished] = useState(true);
   const [filterRegion, setFilterRegion] = useState("All");
   const [filterTier, setFilterTier]   = useState("All");
+  const [filterRound,  setFilterRound]  = useState("All");
+  const [showKenPom,   setShowKenPom]   = useState(false);
+
+  // Round label → date range mapping for UPSET_DATA
+  const ROUND_DATES = {
+    "R64":  ["2026-03-19","2026-03-20"],
+    "R32":  ["2026-03-21","2026-03-22"],
+    "S16":  ["2026-03-27","2026-03-28"],
+    "E8":   ["2026-03-29","2026-03-30"],
+    "F4":   ["2026-04-03"],
+    "NCG":  ["2026-04-05"],
+  };
 
   // Heatmap: jbDelta -5 → 0 = deep red (hottest), 0→15 = orange, 15→30 = amber,
   //          30→45 = yellow-green, 45→65 = teal/blue (coolest)
@@ -1307,13 +1376,17 @@ function PicksTab({ onTeamClick, scores, odds }) {
     let d = [...UPSET_DATA];
     if (filterRegion !== "All") d = d.filter(m => m.region === filterRegion);
     if (filterTier   !== "All") d = d.filter(m => m.tier   === filterTier);
+    if (filterRound  !== "All") {
+      const dates = ROUND_DATES[filterRound] || [];
+      d = d.filter(m => dates.includes(m.date));
+    }
     if (sortBy === "upset")      d.sort((a,b) => b.upset_score - a.upset_score);
     if (sortBy === "jb_delta")   d.sort((a,b) => a.jb_delta   - b.jb_delta);
     if (sortBy === "seed_gap")   d.sort((a,b) => (b.dog_seed - b.fav_seed) - (a.dog_seed - a.fav_seed));
     if (sortBy === "region")     d.sort((a,b) => a.region.localeCompare(b.region));
     if (sortBy === "time")       d.sort((a,b) => (a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
     return hideFinished ? d.filter(m => !scores?.[m.fav]?.some(r=>r.state==="post"&&r.date===m.date)) : d;
-  }, [sortBy, filterRegion, filterTier, hideFinished, scores]);
+  }, [sortBy, filterRegion, filterTier, filterRound, hideFinished, scores]);
 
   const JbBar = ({ score, color }) => (
     <div style={{ display:"flex", alignItems:"center", gap:6 }}>
@@ -1386,6 +1459,16 @@ function PicksTab({ onTeamClick, scores, odds }) {
 
       {/* Controls */}
       <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:"0.875rem", alignItems:"center" }}>
+        <select value={filterRound} onChange={e=>setFilterRound(e.target.value)}
+          style={{ fontSize:12, padding:"5px 6px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-primary)", color:"var(--color-text-primary)" }}>
+          <option value="All">All Rounds</option>
+          <option value="R64">Round of 64</option>
+          <option value="R32">Round of 32</option>
+          <option value="S16">Sweet 16</option>
+          <option value="E8">Elite 8</option>
+          <option value="F4">Final Four</option>
+          <option value="NCG">Championship</option>
+        </select>
         <select value={filterRegion} onChange={e=>setFilterRegion(e.target.value)}
           style={{ fontSize:12, padding:"5px 6px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-primary)", color:"var(--color-text-primary)" }}>
           <option value="All">All Regions</option>
@@ -1414,6 +1497,49 @@ function PicksTab({ onTeamClick, scores, odds }) {
           {hideFinished ? "✓ Hiding finished" : "Hide finished"}
         </button>
         <span style={{ fontSize:11, color:"var(--color-text-tertiary)", marginLeft:"auto" }}>{filtered.length} matchup{filtered.length!==1?"s":""}</span>
+      </div>
+
+      {/* KenPom predictions — collapsible, hidden by default */}
+      <div style={{ marginBottom:"0.875rem" }}>
+        <button onClick={()=>setShowKenPom(s=>!s)} style={{
+          display:"flex", alignItems:"center", gap:7, width:"100%",
+          padding:"8px 12px", borderRadius:"var(--border-radius-md)",
+          border:"0.5px solid var(--color-border-secondary)",
+          background:"var(--color-background-secondary)",
+          color:"var(--color-text-secondary)", cursor:"pointer", fontSize:12,
+          textAlign:"left",
+        }}>
+          <span style={{ fontSize:10, padding:"1px 7px", borderRadius:8, background:"rgba(124,58,237,0.12)", color:"#7c3aed", fontWeight:600 }}>vs KenPom</span>
+          <span style={{ fontWeight:500, color:"var(--color-text-primary)" }}>
+            {filterRound === "R32" ? "Round of 32" : "Round of 64"} — jbScore vs KenPom predictions
+          </span>
+          <span style={{ marginLeft:"auto", fontSize:11, color:"var(--color-text-tertiary)" }}>
+            {showKenPom ? "▲ hide" : "▼ show"}
+          </span>
+        </button>
+        {showKenPom && (
+          <div style={{ marginTop:8 }}>
+            {(filterRound === "All" || filterRound === "R64") && <KenPomR64Compare S={{
+              card:{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", padding:"1rem 1.25rem", marginBottom:"1rem" },
+              metric:{ background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-md)", padding:"12px 14px" },
+              metricLabel:{ fontSize:11, color:"var(--color-text-secondary)", marginBottom:3 },
+              metricValue:{ fontSize:22, fontWeight:500, color:"var(--color-text-primary)", lineHeight:1.2 },
+              metricSub:{ fontSize:11, color:"var(--color-text-tertiary)", marginTop:2 },
+            }}/>}
+            {(filterRound === "All" || filterRound === "R32") && <KenPomR32Compare S={{
+              card:{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", padding:"1rem 1.25rem", marginBottom:"1rem" },
+              metric:{ background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-md)", padding:"12px 14px" },
+              metricLabel:{ fontSize:11, color:"var(--color-text-secondary)", marginBottom:3 },
+              metricValue:{ fontSize:22, fontWeight:500, color:"var(--color-text-primary)", lineHeight:1.2 },
+              metricSub:{ fontSize:11, color:"var(--color-text-tertiary)", marginTop:2 },
+            }}/>}
+            {filterRound !== "All" && filterRound !== "R64" && filterRound !== "R32" && (
+              <div style={{ padding:"1.5rem", textAlign:"center", fontSize:12, color:"var(--color-text-tertiary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)" }}>
+                KenPom comparison data available for R64 and R32. {filterRound} data will be added after games conclude.
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Matchup cards */}
