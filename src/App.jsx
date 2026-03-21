@@ -1492,8 +1492,10 @@ function PicksTab({ onTeamClick, scores }) {
 }
 
 
-// ── AnalysisTab ───────────────────────────────────────────────────────────────
-function AnalysisTab() {
+// ── FormulaResultsTab ────────────────────────────────────────────────────────
+function FormulaResultsTab() {
+  const [round, setRound] = useState("r64");
+
   const S = {
     card: { background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", padding:"1rem 1.25rem", marginBottom:"1rem" },
     sectionTitle: { fontSize:11, fontWeight:500, color:"var(--color-text-secondary)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10, paddingBottom:6, borderBottom:"0.5px solid var(--color-border-tertiary)" },
@@ -1549,9 +1551,23 @@ function AnalysisTab() {
     { dog:"(12) High Point",  fav:"(5) Wisconsin",     score:"83-82",  delta:17.0, uScore:16.1  },
   ];
 
+  const R64_CONTENT = round === "r64";
+  const R32_CONTENT = round === "r32";
+
   return (
     <div>
-      {/* Page header note */}
+      {/* Round selector */}
+      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:"1rem" }}>
+        <span style={{ fontSize:12, fontWeight:500, color:"var(--color-text-secondary)" }}>Round:</span>
+        <select value={round} onChange={e=>setRound(e.target.value)}
+          style={{ fontSize:13, padding:"5px 10px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-primary)", color:"var(--color-text-primary)", fontWeight:500, cursor:"pointer" }}>
+          <option value="r64">Round of 64</option>
+          <option value="r32">Round of 32</option>
+        </select>
+      </div>
+
+      {/* R64 content */}
+      {R64_CONTENT && <div>
       <div style={{ marginBottom:"1rem", padding:"0.75rem 1rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)", fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.6 }}>
         Post-tournament formula analysis — 28 First Round games (2026-03-19/20). jbScore/jbGap and Upset Score evaluated separately against actual results.
       </div>
@@ -1722,21 +1738,17 @@ function AnalysisTab() {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
+      </div>}
 
-
-// ── R32AnalysisTab (stub — populate after Round of 32 completes) ──────────────
-function R32AnalysisTab() {
-  return (
-    <div>
-      <div style={{ marginBottom:"1rem", padding:"0.875rem 1rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)", fontSize:13, color:"var(--color-text-secondary)", lineHeight:1.6 }}>
-        Round of 32 games complete on 2026-03-22/23. Formula results will be posted here after all games finish.
-      </div>
-      <div style={{ padding:"3rem 1rem", textAlign:"center", color:"var(--color-text-tertiary)", fontSize:13, border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)" }}>
-        Results pending — check back after Round of 32 concludes.
-      </div>
+      {/* R32 content — stub until games complete */}
+      {R32_CONTENT && <div>
+        <div style={{ marginBottom:"1rem", padding:"0.75rem 1rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)", fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.6 }}>
+          Round of 32 games on 2026-03-22/23. Formula results will be added here after all games finish.
+        </div>
+        <div style={{ padding:"3rem 1rem", textAlign:"center", color:"var(--color-text-tertiary)", fontSize:13, border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)" }}>
+          Results pending — check back after Round of 32 concludes.
+        </div>
+      </div>}
     </div>
   );
 }
@@ -1753,8 +1765,7 @@ export default function App() {
     { id: "classifier",  label: "Team Classifier" },
     { id: "matchups",    label: "Matchups" },
     { id: "picks",       label: "Picks & Analysis" },
-    { id: "r64results",  label: "R64 Formula Results" },
-    { id: "r32results",  label: "R32 Formula Results" },
+    { id: "results",     label: "Formula Results" },
     { id: "compare",     label: "Compare" },
     { id: "glossary",    label: "Glossary" },
   ];
@@ -1787,8 +1798,7 @@ export default function App() {
       {tab==="matchups"   && <MatchupsTab   onTeamClick={setSelected} scores={scores} lastUpdate={lastUpdate} odds={liveOdds}/>}
       {tab==="glossary"   && <GlossaryTab/>}
       {tab==="picks"      && <PicksTab onTeamClick={setSelected} scores={scores} odds={liveOdds}/>}
-      {tab==="r64results" && <AnalysisTab/>}
-      {tab==="r32results" && <R32AnalysisTab/>}
+      {tab==="results"    && <FormulaResultsTab/>}
       {tab==="compare"    && <CompareTab onTeamClick={setSelected}/>}
 
       {/* Team detail modal — available from both tabs */}
