@@ -1492,6 +1492,163 @@ function PicksTab({ onTeamClick, scores }) {
 }
 
 
+// ── R64ResultsTable ───────────────────────────────────────────────────────────
+function R64ResultsTable({ S }) {
+  const [showAll, setShowAll] = useState(false);
+
+  const ALL_GAMES = [
+    { fav:"(8) Clemson",          dog:"(9) Iowa",              delta:-4.6, uScore:-0.8,  winner:"Iowa",          score:"67-61",  upset:true  },
+    { fav:"(8) Villanova",        dog:"(9) Utah State",        delta:-3.5, uScore:6.7,   winner:"Utah State",    score:"86-76",  upset:true  },
+    { fav:"(6) North Carolina",   dog:"(11) VCU",              delta:-1.9, uScore:11.6,  winner:"VCU",           score:"82-78",  upset:true  },
+    { fav:"(8) Georgia",          dog:"(9) Saint Louis",       delta:0.3,  uScore:-3.5,  winner:"Saint Louis",   score:"102-77", upset:true  },
+    { fav:"(7) Saint Mary\'s",   dog:"(10) Texas A&M",        delta:1.1,  uScore:12.3,  winner:"Texas A&M",     score:"63-50",  upset:true  },
+    { fav:"(7) Kentucky",         dog:"(10) Santa Clara",      delta:2.9,  uScore:1.1,   winner:"Kentucky",      score:"89-84",  upset:false },
+    { fav:"(7) Miami (FL)",       dog:"(10) Missouri",         delta:5.5,  uScore:-4.4,  winner:"Miami (FL)",    score:"80-66",  upset:false },
+    { fav:"(8) Ohio State",       dog:"(9) TCU",               delta:8.9,  uScore:5.7,   winner:"TCU",           score:"66-64",  upset:true  },
+    { fav:"(6) Louisville",       dog:"(11) South Florida",    delta:10.6, uScore:8.8,   winner:"Louisville",    score:"83-79",  upset:false },
+    { fav:"(5) Texas Tech",       dog:"(12) Akron",            delta:13.9, uScore:2.0,   winner:"Texas Tech",    score:"91-71",  upset:false },
+    { fav:"(7) UCLA",             dog:"(10) UCF",              delta:15.8, uScore:-6.0,  winner:"UCLA",          score:"75-71",  upset:false },
+    { fav:"(5) Wisconsin",        dog:"(12) High Point",       delta:17.0, uScore:16.1,  winner:"High Point",    score:"83-82",  upset:true  },
+    { fav:"(3) Michigan State",   dog:"(14) N Dakota State",   delta:19.4, uScore:3.7,   winner:"Michigan State",score:"92-67",  upset:false },
+    { fav:"(5) St. John\'s",     dog:"(12) Northern Iowa",    delta:21.6, uScore:-23.9, winner:"St. John\'s",  score:"79-53",  upset:false },
+    { fav:"(5) Vanderbilt",       dog:"(12) McNeese",          delta:24.2, uScore:-0.8,  winner:"Vanderbilt",    score:"78-68",  upset:false },
+    { fav:"(4) Alabama",          dog:"(13) Hofstra",          delta:28.4, uScore:-18.6, winner:"Alabama",       score:"90-70",  upset:false },
+    { fav:"(4) Kansas",           dog:"(13) Cal Baptist",      delta:28.6, uScore:2.2,   winner:"Kansas",        score:"68-60",  upset:false },
+    { fav:"(4) Nebraska",         dog:"(13) Troy",             delta:33.8, uScore:0.7,   winner:"Nebraska",      score:"76-47",  upset:false },
+    { fav:"(3) Gonzaga",          dog:"(14) Kennesaw State",   delta:34.6, uScore:3.6,   winner:"Gonzaga",       score:"73-64",  upset:false },
+    { fav:"(2) UConn",            dog:"(15) Furman",           delta:34.9, uScore:-10.4, winner:"UConn",         score:"82-71",  upset:false },
+    { fav:"(3) Virginia",         dog:"(14) Wright State",     delta:35.1, uScore:-9.0,  winner:"Virginia",      score:"82-73",  upset:false },
+    { fav:"(4) Arkansas",         dog:"(13) Hawai\'i",        delta:39.8, uScore:-10.2, winner:"Arkansas",      score:"97-78",  upset:false },
+    { fav:"(3) Illinois",         dog:"(14) Penn",             delta:41.6, uScore:-6.1,  winner:"Illinois",      score:"105-70", upset:false },
+    { fav:"(2) Houston",          dog:"(15) Idaho",            delta:42.3, uScore:-7.6,  winner:"Houston",       score:"78-47",  upset:false },
+    { fav:"(2) Purdue",           dog:"(15) Queens",           delta:45.7, uScore:1.4,   winner:"Purdue",        score:"104-71", upset:false },
+    { fav:"(2) Iowa State",       dog:"(15) Tenn. State",      delta:54.9, uScore:-8.9,  winner:"Iowa State",    score:"108-74", upset:false },
+    { fav:"(1) Arizona",          dog:"(16) Long Island",      delta:62.1, uScore:-15.0, winner:"Arizona",       score:"92-58",  upset:false },
+    { fav:"(1) Duke",             dog:"(16) Siena",            delta:63.1, uScore:-24.3, winner:"Duke",          score:"71-65",  upset:false },
+  ];
+
+  const upsets = ALL_GAMES.filter(g => g.upset);
+  const display = showAll ? ALL_GAMES : upsets;
+
+  const col = (upset, uScore) => {
+    if (upset) return "#166534";
+    return uScore > 5 ? "#166534" : uScore < 0 ? "#dc2626" : "var(--color-text-secondary)";
+  };
+
+  return (
+    <div style={S.card}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+        <div style={S.sectionTitle}>
+          {showAll ? `All 28 first-round results` : `All ${upsets.length} first-round upsets`} — sorted by jbGap
+        </div>
+        <button onClick={() => setShowAll(s => !s)} style={{
+          fontSize:11, padding:"3px 10px", borderRadius:6, cursor:"pointer",
+          border:"0.5px solid var(--color-border-secondary)",
+          background:"var(--color-background-secondary)",
+          color:"var(--color-text-secondary)", fontWeight:500, whiteSpace:"nowrap", flexShrink:0
+        }}>
+          {showAll ? "Show upsets only" : "Show all 28 games"}
+        </button>
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr auto auto auto auto", gap:"0 10px", alignItems:"baseline" }}>
+        {["Winner · Loser","Score","Margin","jbGap","Upset sc"].map(h => (
+          <div key={h} style={{ fontSize:11, fontWeight:500, color:"var(--color-text-secondary)", paddingBottom:6, borderBottom:"0.5px solid var(--color-border-secondary)" }}>{h}</div>
+        ))}
+        {display.map((g,i) => {
+          const last = i === display.length - 1;
+          const rowStyle = { padding:"6px 0", borderBottom: last ? "none" : "0.5px solid var(--color-border-tertiary)" };
+          const loser = g.upset ? g.fav : g.dog;
+          return [
+            <div key={`t${i}`} style={{ ...rowStyle, fontSize:13 }}>
+              <span style={{ fontWeight:500, color: g.upset ? "#166534" : "var(--color-text-primary)" }}>{g.winner}</span>
+              <span style={{ color:"var(--color-text-tertiary)", fontSize:11 }}> · {loser}</span>
+              {g.upset && <span style={{ fontSize:9, fontWeight:600, marginLeft:5, padding:"1px 5px", borderRadius:4, background:"rgba(22,101,52,0.1)", color:"#166534" }}>UPSET</span>}
+            </div>,
+            <div key={`s${i}`} style={{ ...rowStyle, ...S.mono }}>{g.score}</div>,
+            <div key={`m${i}`} style={{ ...rowStyle, ...S.mono, color:"var(--color-text-tertiary)" }}>+{parseInt(g.score.split('-')[0]) - parseInt(g.score.split('-')[1])}</div>,
+            <div key={`d${i}`} style={{ ...rowStyle, ...S.mono, color: g.delta < 5 ? "#dc2626" : g.delta < 17 ? "#b45309" : "var(--color-text-secondary)" }}>{g.delta > 0 ? "+" : ""}{g.delta}</div>,
+            <div key={`u${i}`} style={{ ...rowStyle, ...S.mono, color: g.uScore > 5 ? "#166534" : g.uScore < 0 ? "#dc2626" : "var(--color-text-secondary)" }}>{g.uScore > 0 ? "+" : ""}{g.uScore}</div>,
+          ];
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── KenPomCompare ─────────────────────────────────────────────────────────────
+function KenPomCompare({ S }) {
+  // R32 matchups: KenPom prediction vs jbGap signal
+  // KenPom data from FanMatch (2026-03-21)
+  const MATCHUPS = [
+    { dog:"(9) Saint Louis",  fav:"(1) Michigan",    kp_winner:"Michigan",    kp_pct:88, jb_delta:14.6, jb_tier:"Moderate gap", agree:true  },
+    { dog:"(9) TCU",          fav:"(1) Duke",         kp_winner:"Duke",        kp_pct:88, jb_delta:26.5, jb_tier:"Chalk",        agree:true  },
+    { dog:"(12) High Point",  fav:"(4) Arkansas",    kp_winner:"Arkansas",    kp_pct:87, jb_delta:20.7, jb_tier:"Lean favorite",agree:true  },
+    { dog:"(10) Texas A&M",   fav:"(2) Houston",     kp_winner:"Houston",     kp_pct:80, jb_delta:11.6, jb_tier:"Live underdog",agree:true  },
+    { dog:"(11) VCU",         fav:"(3) Illinois",    kp_winner:"Illinois",    kp_pct:81, jb_delta:12.4, jb_tier:"Live underdog",agree:true  },
+    { dog:"(11) Texas",       fav:"(3) Gonzaga",     kp_winner:"Gonzaga",     kp_pct:68, jb_delta:5.7,  jb_tier:"Danger zone",  agree:true  },
+    { dog:"(3) Michigan St",  fav:"(6) Louisville",  kp_winner:"Michigan St", kp_pct:59, jb_delta:2.2,  jb_tier:"Coin flip",    agree:false, note:"KP favors dog" },
+    { dog:"(4) Nebraska",     fav:"(5) Vanderbilt",  kp_winner:"Vanderbilt",  kp_pct:52, jb_delta:6.5,  jb_tier:"Danger zone",  agree:true  },
+    { dog:"(2) UConn",        fav:"(7) UCLA",        kp_winner:"UConn",       kp_pct:null, jb_delta:9.0, jb_tier:"Live underdog", agree:false, note:"jbGap favors UCLA" },
+  ];
+
+  const agree = MATCHUPS.filter(m => m.agree).length;
+  const disagree = MATCHUPS.filter(m => !m.agree).length;
+
+  return (
+    <div style={S.card}>
+      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
+        <span style={{ padding:"2px 9px", borderRadius:10, fontSize:11, fontWeight:500, background:"rgba(124,58,237,0.1)", color:"#7c3aed" }}>vs KenPom</span>
+        <span style={{ fontSize:14, fontWeight:500, color:"var(--color-text-primary)" }}>R32 — jbScore vs KenPom predictions</span>
+        <span style={{ marginLeft:"auto", fontSize:12, color:"var(--color-text-tertiary)" }}>From FanMatch · 2026-03-21</span>
+      </div>
+
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10, marginBottom:14 }}>
+        <div style={S.metric}><div style={S.metricLabel}>Agreement</div><div style={S.metricValue}>{agree}/{MATCHUPS.length}</div><div style={S.metricSub}>Same winner predicted</div></div>
+        <div style={S.metric}><div style={S.metricLabel}>Disagreements</div><div style={S.metricValue}>{disagree}</div><div style={S.metricSub}>Models diverge</div></div>
+        <div style={S.metric}><div style={S.metricLabel}>KP confidence range</div><div style={S.metricValue}>52–88%</div><div style={S.metricSub}>Win probability</div></div>
+      </div>
+
+      <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+        <thead>
+          <tr style={{ borderBottom:"0.5px solid var(--color-border-tertiary)" }}>
+            {["Matchup","KenPom pick","KP%","jbGap","jb tier","Signal"].map(h => (
+              <th key={h} style={{ textAlign:"left", padding:"5px 8px", fontSize:11, fontWeight:500, color:"var(--color-text-secondary)" }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {MATCHUPS.sort((a,b) => b.kp_pct - a.kp_pct).map((m,i) => (
+            <tr key={i} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)", background: !m.agree ? "rgba(217,119,6,0.04)" : "transparent" }}>
+              <td style={{ padding:"7px 8px", color:"var(--color-text-primary)" }}>
+                <span style={{ fontWeight:500 }}>{m.dog}</span>
+                <span style={{ color:"var(--color-text-tertiary)" }}> vs {m.fav}</span>
+              </td>
+              <td style={{ padding:"7px 8px", fontWeight:500 }}>{m.kp_winner}</td>
+              <td style={{ padding:"7px 8px", fontFamily:"monospace", color: m.kp_pct >= 80 ? "#166534" : m.kp_pct <= 55 ? "#b45309" : "var(--color-text-secondary)" }}>
+                {m.kp_pct ? `${m.kp_pct}%` : "—"}
+              </td>
+              <td style={{ padding:"7px 8px", fontFamily:"monospace", color: m.jb_delta < 5 ? "#dc2626" : m.jb_delta < 17 ? "#b45309" : "var(--color-text-secondary)" }}>
+                +{m.jb_delta}
+              </td>
+              <td style={{ padding:"7px 8px", color:"var(--color-text-secondary)" }}>{m.jb_tier}</td>
+              <td style={{ padding:"7px 8px" }}>
+                {m.agree
+                  ? <span style={{ fontSize:11, fontWeight:500, color:"#166534", background:"rgba(22,101,52,0.1)", padding:"1px 7px", borderRadius:10 }}>Agree</span>
+                  : <span style={{ fontSize:11, fontWeight:500, color:"#92400e", background:"rgba(217,119,6,0.1)", padding:"1px 7px", borderRadius:10 }} title={m.note}>Diverge</span>
+                }
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div style={{ marginTop:10, fontSize:11, color:"var(--color-text-tertiary)", lineHeight:1.6 }}>
+        Divergences: Louisville vs Michigan St — KenPom favors Michigan St (59%) while jbGap (2.2) calls it a coin flip with Louisville as listed favorite. UCLA vs UConn — jbGap has UCLA favored (+9.0) but UConn won as the lower seed; KenPom likely agreed with the upset.
+      </div>
+    </div>
+  );
+}
+
+
 // ── FormulaResultsTab ────────────────────────────────────────────────────────
 function FormulaResultsTab() {
   const [round, setRound] = useState("r64");
@@ -1712,25 +1869,11 @@ function FormulaResultsTab() {
         </div>
       </div>
 
-      {/* ── All 7 upsets ── */}
-      <div style={S.card}>
-        <div style={S.sectionTitle}>All 7 first-round upsets (sorted by jbGap)</div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr auto auto auto", gap:"0 12px", alignItems:"baseline" }}>
-          {["Winner def loser","Score","jbGap","Upset sc"].map(h => (
-            <div key={h} style={{ fontSize:11, fontWeight:500, color:"var(--color-text-secondary)", paddingBottom:6, borderBottom:"0.5px solid var(--color-border-secondary)" }}>{h}</div>
-          ))}
-          {UPSETS.map((u,i) => [
-            <div key={`t${i}`} style={{ fontSize:13, padding:"6px 0", borderBottom: i<6 ? "0.5px solid var(--color-border-tertiary)" : "none" }}>
-              <span style={{ fontWeight:500 }}>{u.dog}</span><span style={{ color:"var(--color-text-tertiary)" }}> def {u.fav}</span>
-            </div>,
-            <div key={`s${i}`} style={{ ...S.mono, padding:"6px 0", borderBottom: i<6 ? "0.5px solid var(--color-border-tertiary)" : "none" }}>{u.score}</div>,
-            <div key={`d${i}`} style={{ ...S.mono, padding:"6px 0", borderBottom: i<6 ? "0.5px solid var(--color-border-tertiary)" : "none", color: u.delta < 0 ? "#dc2626" : "var(--color-text-secondary)" }}>{u.delta > 0 ? "+" : ""}{u.delta}</div>,
-            <div key={`u${i}`} style={{ ...S.mono, padding:"6px 0", borderBottom: i<6 ? "0.5px solid var(--color-border-tertiary)" : "none", color: u.uScore > 5 ? "#166534" : u.uScore < 0 ? "#dc2626" : "var(--color-text-secondary)" }}>{u.uScore > 0 ? "+" : ""}{u.uScore}</div>,
-          ])}
-        </div>
-      </div>
+      {/* ── All R64 results ── */}
+      <R64ResultsTable S={S}/>
 
 
+        <KenPomCompare S={S}/>
       </div>}
 
       {/* R32 content — stub until games complete */}
