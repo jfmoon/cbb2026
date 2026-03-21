@@ -1553,6 +1553,8 @@ function FormulaResultsTab() {
 
   const R64_CONTENT = round === "r64";
   const R32_CONTENT = round === "r32";
+  const PENDING_ROUND = ["s16","e8","f4","ncg"].includes(round);
+  const ROUND_LABELS = { s16:"Sweet 16", e8:"Elite 8", f4:"Final Four", ncg:"National Championship" };
 
   return (
     <div>
@@ -1563,6 +1565,10 @@ function FormulaResultsTab() {
           style={{ fontSize:13, padding:"5px 10px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-primary)", color:"var(--color-text-primary)", fontWeight:500, cursor:"pointer" }}>
           <option value="r64">Round of 64</option>
           <option value="r32">Round of 32</option>
+          <option value="s16">Sweet 16</option>
+          <option value="e8">Elite 8</option>
+          <option value="f4">Final Four</option>
+          <option value="ncg">National Championship</option>
         </select>
       </div>
 
@@ -1724,20 +1730,7 @@ function FormulaResultsTab() {
         </div>
       </div>
 
-      {/* ── Formula improvement notes ── */}
-      <div style={S.card}>
-        <div style={S.sectionTitle}>Formula improvement notes</div>
-        {[
-          { title:"Add KenPom Luck", body:"Purdue and Arizona both carry historically high luck ratings — luck-adjusted scores would flag them as regression candidates. Already planned for next scraper run." },
-          { title:"jbGap 8–23 is under-differentiated", body:"Live underdog (8–13) and Lean favorite (17–23) both produced upsets but at different rates (50% vs 33%). Consider splitting or reweighting the composite to better separate this range." },
-          { title:"Upset Score blind spots are 8/9 matchups", body:"Both missed upsets (Iowa, Saint Louis) were seed-adjacent games. The formula relies on possession stats, but 8/9 games are frequently decided by intangibles. No clear stat fix — flag these games as 'model uncertainty' tier." },
-        ].map((n,i) => (
-          <div key={i} style={{ paddingBottom: i<2 ? 12 : 0, marginBottom: i<2 ? 12 : 0, borderBottom: i<2 ? "0.5px solid var(--color-border-tertiary)" : "none" }}>
-            <div style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)", marginBottom:3 }}>{n.title}</div>
-            <div style={{ fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.6 }}>{n.body}</div>
-          </div>
-        ))}
-      </div>
+
       </div>}
 
       {/* R32 content — stub until games complete */}
@@ -1747,6 +1740,13 @@ function FormulaResultsTab() {
         </div>
         <div style={{ padding:"3rem 1rem", textAlign:"center", color:"var(--color-text-tertiary)", fontSize:13, border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)" }}>
           Results pending — check back after Round of 32 concludes.
+        </div>
+      </div>}
+
+      {/* Future rounds — stub */}
+      {PENDING_ROUND && <div>
+        <div style={{ padding:"3rem 1rem", textAlign:"center", color:"var(--color-text-tertiary)", fontSize:13, border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)" }}>
+          {ROUND_LABELS[round]} results will be added after games conclude.
         </div>
       </div>}
     </div>
