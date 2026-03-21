@@ -128,9 +128,10 @@ const MATCHUP_DATA = [{"round":"First Four","region":"Midwest","date":"2026-03-1
 
 // ── Live scores hook ──────────────────────────────────────────────────────────
 function useScores() {
-  const [scores, setScores] = useState({});
+  const [scores, setScores]         = useState({});
   const [lastUpdate, setLastUpdate] = useState(null);
-  const timerRef = useRef(null);
+  const [error, setError]           = useState(null);
+  const fetchingRef                 = useRef(false); // in-flight guard
 
   function buildLookup(games) {
     // Store as array of results per team — a team can appear multiple times
@@ -148,25 +149,43 @@ function useScores() {
     return map;
   }
 
-  async function fetchScores() {
-    try {
-      const r = await fetch("https://storage.googleapis.com/cbb-scores-490420/scores.json?t=" + Date.now(), { cache: "no-store" });
-      console.log("[scores] fetch status:", r.status, r.url);
-      if (!r.ok) { console.warn("[scores] not ok:", r.status); return; }
-      const data = await r.json();
-      console.log("[scores] loaded", data.games?.length, "games:", data.games?.map(g=>g.t1_name+"/"+g.t2_name));
-      setScores(buildLookup(data.games || []));
-      setLastUpdate(data.updated || null);
-    } catch(e) { console.warn("[scores] fetch error:", e.message); }
-  }
-
   useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchScores() {
+      if (fetchingRef.current) return; // skip if previous fetch still running
+      fetchingRef.current = true;
+      try {
+        const r = await fetch(
+          "https://storage.googleapis.com/cbb-scores-490420/scores.json",
+          { cache: "no-store", signal: controller.signal }
+        );
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        if (!data || !Array.isArray(data.games)) {
+          throw new Error("scores.json missing games array");
+        }
+        setScores(buildLookup(data.games));
+        setLastUpdate(data.updated || null);
+        setError(null);
+      } catch(e) {
+        if (e.name === "AbortError") return; // unmount cleanup, not a real error
+        console.warn("[scores] fetch error:", e.message);
+        setError(e.message);
+      } finally {
+        fetchingRef.current = false;
+      }
+    }
+
     fetchScores();
-    timerRef.current = setInterval(fetchScores, 10 * 60 * 1000); // 10 min during tournament
-    return () => clearInterval(timerRef.current);
+    const interval = setInterval(fetchScores, 10 * 60 * 1000); // 10 min during tournament
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+    };
   }, []);
 
-  return { scores, lastUpdate };
+  return { scores, lastUpdate, error };
 }
 
 
@@ -176,12 +195,19 @@ function useOdds() {
   const [odds, setOdds] = useState({});
 
   useEffect(() => {
-    fetch("https://storage.googleapis.com/cbb-scores-490420/odds.json?t=" + Date.now())
+    fetch("https://storage.googleapis.com/cbb-scores-490420/odds.json", { cache: "no-store" })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data?.odds && Object.keys(data.odds).length > 0) {
+        if (
+          data &&
+          data.odds &&
+          typeof data.odds === "object" &&
+          !Array.isArray(data.odds) &&
+          Object.keys(data.odds).length > 0
+        ) {
           setOdds(data.odds);
-          console.log("[odds] loaded", Object.keys(data.odds).length, "teams from GCS");
+        } else {
+          console.warn("[odds] unexpected payload shape:", data);
         }
       })
       .catch(e => console.warn("[odds] fetch error:", e.message));
@@ -543,8 +569,8 @@ function MatchupCard({ matchup, onTeamClick, scores, odds }) {
 function MatchupsTab({ onTeamClick, scores, lastUpdate, odds }) {
   const [filterRegion,  setFilterRegion]  = useState("All");
   const [filterRound,   setFilterRound]   = useState("All");
-  const [sortBy,        setSortBy]        = useState("region");
-  const [hideFinished,  setHideFinished]  = useState(false);
+  const [sortBy,        setSortBy]        = useState("time");
+  const [hideFinished,  setHideFinished]  = useState(true);
 
   const matchups = useMemo(() => {
     let filtered = MATCHUP_DATA.filter(m => {
@@ -1239,9 +1265,11 @@ function CompareTab({ onTeamClick }) {
   );
 }
 
-function PicksTab({ onTeamClick, scores }) {
-  const [sortBy,       setSortBy]      = useState("upset");
-  const [hideFinished, setHideFinished] = useState(false);
+const TEAMS_BY_NAME = Object.fromEntries(TEAMS_WITH_CP.map(t => [t.name, t]));
+
+function PicksTab({ onTeamClick, scores, odds }) {
+  const [sortBy,       setSortBy]      = useState("time");
+  const [hideFinished, setHideFinished] = useState(true);
   const [filterRegion, setFilterRegion] = useState("All");
   const [filterTier, setFilterTier]   = useState("All");
 
@@ -1393,8 +1421,8 @@ function PicksTab({ onTeamClick, scores }) {
         {filtered.map((m,i) => {
           const tm   = TIER_META[m.tier];
           const gc   = gapColor(m.jb_delta);
-          const oFav = ODDS[m.fav] || {};
-          const oDog = ODDS[m.dog] || {};
+          const oFav = (odds && odds[m.fav]) || ODDS[m.fav] || {};
+          const oDog = (odds && odds[m.dog]) || ODDS[m.dog] || {};
           const jbFav = JB_DATA[m.fav]?.jb;
           const jbDog = JB_DATA[m.dog]?.jb;
           const favColor = "#475569";
@@ -1422,7 +1450,7 @@ function PicksTab({ onTeamClick, scores }) {
                     <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:4 }}>
                       <span style={{ fontSize:10, background:"var(--color-border-tertiary)", borderRadius:"50%", width:18, height:18, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:600, flexShrink:0 }}>{m.fav_seed}</span>
                       <span style={{ fontSize:13, fontWeight:600, color:"var(--color-text-primary)", cursor:"pointer" }}
-                        onClick={()=>{const t=TEAMS.find(t=>t.name===m.fav);if(t)onTeamClick(t);}}>
+                        onClick={()=>{const t=TEAMS_BY_NAME[m.fav];if(t)onTeamClick(t);}}>
                         {m.fav}
                       </span>
                     </div>
@@ -1443,7 +1471,7 @@ function PicksTab({ onTeamClick, scores }) {
                     <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:4 }}>
                       <span style={{ fontSize:10, background:dogColor+"22", color:dogColor, borderRadius:"50%", width:18, height:18, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:600, flexShrink:0 }}>{m.dog_seed}</span>
                       <span style={{ fontSize:13, fontWeight:600, color:dogColor, cursor:"pointer" }}
-                        onClick={()=>{const t=TEAMS.find(t=>t.name===m.dog);if(t)onTeamClick(t);}}>
+                        onClick={()=>{const t=TEAMS_BY_NAME[m.dog];if(t)onTeamClick(t);}}>
                         {m.dog}
                       </span>
                     </div>
