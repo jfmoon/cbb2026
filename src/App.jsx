@@ -1248,26 +1248,24 @@ function PicksTab({ onTeamClick, scores }) {
   // Heatmap: jbDelta -5 → 0 = deep red (hottest), 0→15 = orange, 15→30 = amber,
   //          30→45 = yellow-green, 45→65 = teal/blue (coolest)
   function gapColor(delta) {
-    if (delta < -10) return { bg:"#7f1d1d", text:"#fca5a5", border:"#991b1b" }; // deep red
-    if (delta < 0)   return { bg:"#b91c1c", text:"#fecaca", border:"#dc2626" }; // red
-    if (delta < 5)   return { bg:"#c2410c", text:"#fed7aa", border:"#ea580c" }; // orange
-    if (delta < 8)   return { bg:"#b45309", text:"#fde68a", border:"#d97706" }; // amber
-    if (delta < 13)  return { bg:"#854d0e", text:"#fef08a", border:"#ca8a04" }; // dark amber
-    if (delta < 17)  return { bg:"#3f6212", text:"#d9f99d", border:"#65a30d" }; // yellow-green
-    if (delta < 23)  return { bg:"#166534", text:"#bbf7d0", border:"#16a34a" }; // green
-    if (delta < 35)  return { bg:"#0f766e", text:"#99f6e4", border:"#0d9488" }; // teal
-    return              { bg:"#1d4ed8", text:"#bfdbfe", border:"#3b82f6" };     // blue
+    if (delta < 0)   return { bg:"#b91c1c", text:"#fecaca", border:"#dc2626" }; // red    — pick the dog
+    if (delta < 5)   return { bg:"#c2410c", text:"#fed7aa", border:"#ea580c" }; // orange — coin flip
+    if (delta < 8)   return { bg:"#854d0e", text:"#fef08a", border:"#ca8a04" }; // amber  — danger zone
+    if (delta < 13)  return { bg:"#b45309", text:"#fde68a", border:"#d97706" }; // amber  — live underdog
+    if (delta < 17)  return { bg:"#3f6212", text:"#d9f99d", border:"#65a30d" }; // green  — moderate gap
+    if (delta < 23)  return { bg:"#166534", text:"#bbf7d0", border:"#16a34a" }; // green  — lean favorite
+    if (delta < 35)  return { bg:"#0f766e", text:"#99f6e4", border:"#0d9488" }; // teal   — chalk
+    return              { bg:"#1d4ed8", text:"#bfdbfe", border:"#3b82f6" };     // blue   — blowout city
   }
 
   function gapLabel(delta) {
-    if (delta < -10) return "🔥 Upset city";
-    if (delta < 0)   return "⚡ Upset potential";
+    if (delta < 0)   return "🔥 Pick the dog";
     if (delta < 5)   return "Coin flip";
-    if (delta < 8)   return "Razor thin";
-    if (delta < 13)  return "Narrow gap";
+    if (delta < 8)   return "Danger zone";
+    if (delta < 13)  return "Live underdog";
     if (delta < 17)  return "Moderate gap";
-    if (delta < 23)  return "Clear gap";
-    if (delta < 35)  return "Blowout potential";
+    if (delta < 23)  return "Lean favorite";
+    if (delta < 35)  return "Chalk";
     return "Blowout city";
   }
 
@@ -1333,7 +1331,7 @@ function PicksTab({ onTeamClick, scores }) {
     <div>
       {/* Explainer */}
       <div style={{ marginBottom:"1rem", padding:"0.875rem 1rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)" }}>
-        <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
+        <div style={{ display:"flex", gap:16, flexWrap:"wrap", marginBottom:10 }}>
           <div style={{ flex:1, minWidth:180 }}>
             <p style={{ margin:"0 0 3px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>jbScore (baseline)</p>
             <p style={{ margin:0, fontSize:11, color:"var(--color-text-tertiary)", lineHeight:1.5 }}>
@@ -1346,14 +1344,14 @@ function PicksTab({ onTeamClick, scores }) {
               Possession-volatility edge for the underdog. Positive = dog has statistical advantages that generate upset probability.
             </p>
           </div>
-          <div style={{ flex:1, minWidth:180 }}>
-            <p style={{ margin:"0 0 3px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>jbGap heatmap</p>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginTop:4 }}>
-              {[[-15,"Upset city"],[-5,"Upset potential"],[2,"Coin flip"],[6,"Razor thin"],[10,"Narrow"],[15,"Moderate"],[20,"Clear"],[28,"Blowout potential"],[40,"Blowout city"]].map(([d,l])=>{
-                const c = gapColor(d);
-                return <span key={l} style={{ fontSize:9, padding:"2px 6px", borderRadius:4, background:c.bg, color:c.text, border:`1px solid ${c.border}` }}>{l}</span>;
-              })}
-            </div>
+        </div>
+        <div style={{ borderTop:"0.5px solid var(--color-border-tertiary)", paddingTop:8 }}>
+          <p style={{ margin:"0 0 6px", fontSize:12, fontWeight:500, color:"var(--color-text-primary)" }}>jbGap heatmap</p>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+            {[[-2,"Pick the dog"],[2,"Coin flip"],[6,"Danger zone"],[10,"Live underdog"],[15,"Moderate gap"],[20,"Lean favorite"],[28,"Chalk"],[40,"Blowout city"]].map(([d,l])=>{
+              const c = gapColor(d);
+              return <span key={l} style={{ fontSize:9, padding:"2px 6px", borderRadius:4, background:c.bg, color:c.text, border:`1px solid ${c.border}` }}>{l}</span>;
+            })}
           </div>
         </div>
       </div>
@@ -1494,6 +1492,256 @@ function PicksTab({ onTeamClick, scores }) {
 }
 
 
+// ── AnalysisTab ───────────────────────────────────────────────────────────────
+function AnalysisTab() {
+  const S = {
+    card: { background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", padding:"1rem 1.25rem", marginBottom:"1rem" },
+    sectionTitle: { fontSize:11, fontWeight:500, color:"var(--color-text-secondary)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10, paddingBottom:6, borderBottom:"0.5px solid var(--color-border-tertiary)" },
+    metricGrid: { display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10, marginBottom:"1rem" },
+    metric: { background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-md)", padding:"12px 14px" },
+    metricLabel: { fontSize:11, color:"var(--color-text-secondary)", marginBottom:3 },
+    metricValue: { fontSize:22, fontWeight:500, color:"var(--color-text-primary)", lineHeight:1.2 },
+    metricSub: { fontSize:11, color:"var(--color-text-tertiary)", marginTop:2 },
+    gameRow: { display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"6px 0", borderBottom:"0.5px solid var(--color-border-tertiary)", gap:8, fontSize:13 },
+    mono: { fontFamily:"var(--font-mono, monospace)", fontSize:12, color:"var(--color-text-secondary)" },
+    divider: { height:"0.5px", background:"var(--color-border-tertiary)", margin:"1.25rem 0" },
+    twoCol: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem" },
+    callout: (type) => ({
+      padding:"10px 14px", borderRadius:"var(--border-radius-md)", fontSize:12, lineHeight:1.6, marginTop:10,
+      background: type==="warn" ? "rgba(217,119,6,0.08)" : type==="success" ? "rgba(22,101,52,0.08)" : "rgba(29,78,216,0.08)",
+      border: `0.5px solid ${type==="warn" ? "rgba(217,119,6,0.3)" : type==="success" ? "rgba(22,101,52,0.3)" : "rgba(29,78,216,0.3)"}`,
+      color: type==="warn" ? "#92400e" : type==="success" ? "#14532d" : "#1e3a8a",
+    }),
+  };
+
+  const pill = (type) => ({
+    display:"inline-block", padding:"2px 7px", borderRadius:10, fontSize:11, fontWeight:500,
+    background: type==="hit" ? "rgba(22,101,52,0.1)" : type==="miss" ? "rgba(153,27,27,0.1)" : "rgba(146,64,14,0.1)",
+    color: type==="hit" ? "#166534" : type==="miss" ? "#991b1b" : "#92400e",
+  });
+
+  const dot = (color) => ({ display:"inline-block", width:8, height:8, borderRadius:"50%", background:color, marginRight:5, verticalAlign:"middle", flexShrink:0 });
+
+  const Bar = ({ pct, color, width=80 }) => (
+    <div style={{ width, height:5, background:"var(--color-border-tertiary)", borderRadius:3, display:"inline-block" }}>
+      <div style={{ width:`${pct}%`, height:5, background:color, borderRadius:3 }}/>
+    </div>
+  );
+
+  const TIERS = [
+    { label:"Pick the dog",  range:"< 0",      color:"#b91c1c", n:3,  upsets:3,  pct:100 },
+    { label:"Coin flip",     range:"0 – 5",    color:"#c2410c", n:3,  upsets:2,  pct:67  },
+    { label:"Danger zone",   range:"5 – 8",    color:"#854d0e", n:1,  upsets:0,  pct:0   },
+    { label:"Live underdog", range:"8 – 13",   color:"#b45309", n:2,  upsets:1,  pct:50  },
+    { label:"Moderate gap",  range:"13 – 17",  color:"#3f6212", n:2,  upsets:0,  pct:0   },
+    { label:"Lean favorite", range:"17 – 23",  color:"#166534", n:3,  upsets:1,  pct:33  },
+    { label:"Chalk",         range:"23 – 35",  color:"#0f766e", n:6,  upsets:0,  pct:0   },
+    { label:"Blowout city",  range:"35+",      color:"#1d4ed8", n:8,  upsets:0,  pct:0   },
+  ];
+
+  const UPSETS = [
+    { dog:"(9) Iowa",         fav:"(8) Clemson",       score:"67-61",  delta:-4.6, uScore:-0.8  },
+    { dog:"(9) Utah State",   fav:"(8) Villanova",     score:"86-76",  delta:-3.5, uScore:6.7   },
+    { dog:"(11) VCU",         fav:"(6) N Carolina",    score:"82-78",  delta:-1.9, uScore:11.6  },
+    { dog:"(9) Saint Louis",  fav:"(8) Georgia",       score:"102-77", delta:0.3,  uScore:-3.5  },
+    { dog:"(10) Texas A&M",   fav:"(7) Saint Mary's",  score:"63-50",  delta:1.1,  uScore:12.3  },
+    { dog:"(9) TCU",          fav:"(8) Ohio State",    score:"66-64",  delta:8.9,  uScore:5.7   },
+    { dog:"(12) High Point",  fav:"(5) Wisconsin",     score:"83-82",  delta:17.0, uScore:16.1  },
+  ];
+
+  return (
+    <div>
+      {/* Page header note */}
+      <div style={{ marginBottom:"1rem", padding:"0.75rem 1rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)", fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.6 }}>
+        Post-tournament formula analysis — 28 First Round games (2026-03-19/20). jbScore/jbGap and Upset Score evaluated separately against actual results.
+      </div>
+
+      {/* ── FORMULA 1: jbScore / jbGap ── */}
+      <div style={S.card}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
+          <span style={{ padding:"2px 9px", borderRadius:10, fontSize:11, fontWeight:500, background:"rgba(29,78,216,0.1)", color:"#1d4ed8" }}>Formula 1</span>
+          <span style={{ fontSize:14, fontWeight:500, color:"var(--color-text-primary)" }}>jbScore / jbGap — team quality + gap signal</span>
+        </div>
+
+        <div style={S.metricGrid}>
+          <div style={S.metric}>
+            <div style={S.metricLabel}>Direction accuracy</div>
+            <div style={S.metricValue}>75%</div>
+            <div style={S.metricSub}>21 of 28 games correct</div>
+          </div>
+          <div style={S.metric}>
+            <div style={S.metricLabel}>Upsets (first round)</div>
+            <div style={S.metricValue}>7 / 28</div>
+            <div style={S.metricSub}>25% upset rate</div>
+          </div>
+          <div style={S.metric}>
+            <div style={S.metricLabel}>Blowout tiers (23+) accuracy</div>
+            <div style={S.metricValue}>100%</div>
+            <div style={S.metricSub}>14 of 14 went chalk</div>
+          </div>
+        </div>
+
+        {/* Tier table */}
+        <div style={S.sectionTitle}>jbGap tier breakdown</div>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+          <thead>
+            <tr style={{ borderBottom:"0.5px solid var(--color-border-tertiary)" }}>
+              {["Tier","Range","Games","Upsets","Upset %",""].map(h => (
+                <th key={h} style={{ textAlign:"left", padding:"5px 8px", fontSize:11, fontWeight:500, color:"var(--color-text-secondary)" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {TIERS.map(t => (
+              <tr key={t.label} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)" }}>
+                <td style={{ padding:"7px 8px" }}><span style={dot(t.color)}/>{t.label}</td>
+                <td style={{ padding:"7px 8px", fontFamily:"monospace", fontSize:11, color:"var(--color-text-secondary)" }}>{t.range}</td>
+                <td style={{ padding:"7px 8px", color:"var(--color-text-secondary)" }}>{t.n}</td>
+                <td style={{ padding:"7px 8px", color:"var(--color-text-secondary)" }}>{t.upsets}</td>
+                <td style={{ padding:"7px 8px", fontWeight: t.pct >= 50 ? 600 : 400 }}>{t.pct}%</td>
+                <td style={{ padding:"7px 8px" }}><Bar pct={t.pct} color={t.color}/></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div style={{ ...S.callout("warn"), marginTop:12 }}>
+          Signal held cleanly at the extremes — jbGap below 0 went to the lower-seed team 100% (3/3), and every game above 23 went chalk (14/14). The messy zone is 8–23 where gap size alone doesn't tell the full story. "Lean favorite" (17–23) still produced 1 upset in 3 games — High Point over Wisconsin at jbGap 17.0, won by 1. Tier names calibrated to reflect actual R64 behavior.
+        </div>
+      </div>
+
+      {/* ── FORMULA 2: Upset Score ── */}
+      <div style={S.card}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
+          <span style={{ padding:"2px 9px", borderRadius:10, fontSize:11, fontWeight:500, background:"rgba(217,119,6,0.1)", color:"#92400e" }}>Formula 2</span>
+          <span style={{ fontSize:14, fontWeight:500, color:"var(--color-text-primary)" }}>Upset Score — possession volatility composite</span>
+        </div>
+
+        <div style={S.metricGrid}>
+          <div style={S.metric}>
+            <div style={S.metricLabel}>Top 3 candidates hit</div>
+            <div style={S.metricValue}>3 / 3</div>
+            <div style={S.metricSub}>High Point, Texas A&M, VCU</div>
+          </div>
+          <div style={S.metric}>
+            <div style={S.metricLabel}>Top 6 candidates hit</div>
+            <div style={S.metricValue}>5 / 6</div>
+            <div style={S.metricSub}>South Florida only miss</div>
+          </div>
+          <div style={S.metric}>
+            <div style={S.metricLabel}>Upsets w/ negative score</div>
+            <div style={S.metricValue}>2 / 7</div>
+            <div style={S.metricSub}>Iowa, Saint Louis — blind spots</div>
+          </div>
+        </div>
+
+        <div style={S.twoCol}>
+          {/* Top candidates */}
+          <div>
+            <div style={S.sectionTitle}>Top upset score candidates</div>
+            {[
+              { dog:"(12) High Point",  fav:"(5) Wisconsin",     us:16.1, score:"83-82",  hit:true  },
+              { dog:"(10) Texas A&M",   fav:"(7) Saint Mary's",  us:12.3, score:"63-50",  hit:true  },
+              { dog:"(11) VCU",         fav:"(6) N Carolina",    us:11.6, score:"82-78",  hit:true  },
+              { dog:"(11) S Florida",   fav:"(6) Louisville",    us:8.8,  score:"83-79",  hit:false },
+              { dog:"(9) Utah State",   fav:"(8) Villanova",     us:6.7,  score:"86-76",  hit:true  },
+              { dog:"(9) TCU",          fav:"(8) Ohio State",    us:5.7,  score:"66-64",  hit:true  },
+            ].map((r,i) => (
+              <div key={i} style={{ ...S.gameRow, ...(i===5?{borderBottom:"none"}:{}) }}>
+                <div style={{ flex:1, color: r.hit ? "var(--color-text-primary)" : "var(--color-text-secondary)" }}>
+                  <span style={{ fontWeight: r.hit ? 500 : 400 }}>{r.dog}</span>
+                  <span style={{ color:"var(--color-text-tertiary)", fontSize:11 }}> vs {r.fav}</span>
+                </div>
+                <span style={{ ...S.mono }}>{r.us > 0 ? "+" : ""}{r.us}</span>
+                <span style={{ ...S.mono, width:44, textAlign:"right" }}>{r.score}</span>
+                <span style={pill(r.hit ? "hit" : "miss")}>{r.hit ? "Hit" : "Miss"}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Blind spots */}
+          <div>
+            <div style={S.sectionTitle}>Blind spots — missed upsets</div>
+            {[
+              { dog:"(9) Iowa",        fav:"(8) Clemson",   us:-0.8, score:"67-61"  },
+              { dog:"(9) Saint Louis", fav:"(8) Georgia",   us:-3.5, score:"102-77" },
+            ].map((r,i) => (
+              <div key={i} style={{ ...S.gameRow }}>
+                <div style={{ flex:1 }}><span style={{ fontWeight:500 }}>{r.dog}</span><span style={{ color:"var(--color-text-tertiary)", fontSize:11 }}> def {r.fav}</span></div>
+                <span style={{ ...S.mono, color:"#dc2626" }}>{r.us}</span>
+                <span style={{ ...S.mono, width:44, textAlign:"right" }}>{r.score}</span>
+                <span style={pill("warn")}>Blind spot</span>
+              </div>
+            ))}
+            <div style={{ marginTop:12, paddingTop:10, borderTop:"0.5px solid var(--color-border-tertiary)" }}>
+              <div style={{ ...S.sectionTitle, marginBottom:8 }}>High score, fav held on</div>
+              <div style={{ ...S.gameRow, borderBottom:"none" }}>
+                <div style={{ flex:1 }}><span style={{ color:"var(--color-text-secondary)" }}>(6) Louisville def (11) S Florida</span></div>
+                <span style={{ ...S.mono }}>+8.8</span>
+                <span style={{ ...S.mono, width:44, textAlign:"right" }}>83-79</span>
+                <span style={pill("warn")}>4-pt win</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ ...S.callout("success"), marginTop:12 }}>
+          5 of top 6 upset score candidates resulted in actual upsets. All three games scoring above +11 hit at 100%. The two blind spots (Iowa, Saint Louis) were both 8/9 games — jbGap already flagged them as near-even, so the upset score just didn't add independent signal. South Florida came within 4 points.
+        </div>
+      </div>
+
+      {/* ── All 7 upsets ── */}
+      <div style={S.card}>
+        <div style={S.sectionTitle}>All 7 first-round upsets (sorted by jbGap)</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr auto auto auto", gap:"0 12px", alignItems:"baseline" }}>
+          {["Winner def loser","Score","jbGap","Upset sc"].map(h => (
+            <div key={h} style={{ fontSize:11, fontWeight:500, color:"var(--color-text-secondary)", paddingBottom:6, borderBottom:"0.5px solid var(--color-border-secondary)" }}>{h}</div>
+          ))}
+          {UPSETS.map((u,i) => [
+            <div key={`t${i}`} style={{ fontSize:13, padding:"6px 0", borderBottom: i<6 ? "0.5px solid var(--color-border-tertiary)" : "none" }}>
+              <span style={{ fontWeight:500 }}>{u.dog}</span><span style={{ color:"var(--color-text-tertiary)" }}> def {u.fav}</span>
+            </div>,
+            <div key={`s${i}`} style={{ ...S.mono, padding:"6px 0", borderBottom: i<6 ? "0.5px solid var(--color-border-tertiary)" : "none" }}>{u.score}</div>,
+            <div key={`d${i}`} style={{ ...S.mono, padding:"6px 0", borderBottom: i<6 ? "0.5px solid var(--color-border-tertiary)" : "none", color: u.delta < 0 ? "#dc2626" : "var(--color-text-secondary)" }}>{u.delta > 0 ? "+" : ""}{u.delta}</div>,
+            <div key={`u${i}`} style={{ ...S.mono, padding:"6px 0", borderBottom: i<6 ? "0.5px solid var(--color-border-tertiary)" : "none", color: u.uScore > 5 ? "#166534" : u.uScore < 0 ? "#dc2626" : "var(--color-text-secondary)" }}>{u.uScore > 0 ? "+" : ""}{u.uScore}</div>,
+          ])}
+        </div>
+      </div>
+
+      {/* ── Formula improvement notes ── */}
+      <div style={S.card}>
+        <div style={S.sectionTitle}>Formula improvement notes</div>
+        {[
+          { title:"Add KenPom Luck", body:"Purdue and Arizona both carry historically high luck ratings — luck-adjusted scores would flag them as regression candidates. Already planned for next scraper run." },
+          { title:"jbGap 8–23 is under-differentiated", body:"Live underdog (8–13) and Lean favorite (17–23) both produced upsets but at different rates (50% vs 33%). Consider splitting or reweighting the composite to better separate this range." },
+          { title:"Upset Score blind spots are 8/9 matchups", body:"Both missed upsets (Iowa, Saint Louis) were seed-adjacent games. The formula relies on possession stats, but 8/9 games are frequently decided by intangibles. No clear stat fix — flag these games as 'model uncertainty' tier." },
+        ].map((n,i) => (
+          <div key={i} style={{ paddingBottom: i<2 ? 12 : 0, marginBottom: i<2 ? 12 : 0, borderBottom: i<2 ? "0.5px solid var(--color-border-tertiary)" : "none" }}>
+            <div style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)", marginBottom:3 }}>{n.title}</div>
+            <div style={{ fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.6 }}>{n.body}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+// ── R32AnalysisTab (stub — populate after Round of 32 completes) ──────────────
+function R32AnalysisTab() {
+  return (
+    <div>
+      <div style={{ marginBottom:"1rem", padding:"0.875rem 1rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)", fontSize:13, color:"var(--color-text-secondary)", lineHeight:1.6 }}>
+        Round of 32 games complete on 2026-03-22/23. Formula results will be posted here after all games finish.
+      </div>
+      <div style={{ padding:"3rem 1rem", textAlign:"center", color:"var(--color-text-tertiary)", fontSize:13, border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)" }}>
+        Results pending — check back after Round of 32 concludes.
+      </div>
+    </div>
+  );
+}
+
+
 // ── Root ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [tab,      setTab]      = useState("classifier");
@@ -1502,11 +1750,13 @@ export default function App() {
   const [selected, setSelected] = useState(null);
 
   const tabs = [
-    { id: "classifier", label: "Team Classifier" },
-    { id: "matchups",   label: "Matchups" },
-    { id: "picks",     label: "Picks & Analysis" },
-    { id: "compare",   label: "Compare" },
-    { id: "glossary",   label: "Glossary" },
+    { id: "classifier",  label: "Team Classifier" },
+    { id: "matchups",    label: "Matchups" },
+    { id: "picks",       label: "Picks & Analysis" },
+    { id: "r64results",  label: "R64 Formula Results" },
+    { id: "r32results",  label: "R32 Formula Results" },
+    { id: "compare",     label: "Compare" },
+    { id: "glossary",    label: "Glossary" },
   ];
 
   return (
@@ -1536,8 +1786,10 @@ export default function App() {
       {tab==="classifier" && <ClassifierTab onTeamClick={setSelected} scores={scores}/>}
       {tab==="matchups"   && <MatchupsTab   onTeamClick={setSelected} scores={scores} lastUpdate={lastUpdate} odds={liveOdds}/>}
       {tab==="glossary"   && <GlossaryTab/>}
-      {tab==="picks"     && <PicksTab onTeamClick={setSelected} scores={scores} odds={liveOdds}/>}
-      {tab==="compare"   && <CompareTab onTeamClick={setSelected}/>}
+      {tab==="picks"      && <PicksTab onTeamClick={setSelected} scores={scores} odds={liveOdds}/>}
+      {tab==="r64results" && <AnalysisTab/>}
+      {tab==="r32results" && <R32AnalysisTab/>}
+      {tab==="compare"    && <CompareTab onTeamClick={setSelected}/>}
 
       {/* Team detail modal — available from both tabs */}
       {selected && <TeamModal team={selected} onClose={()=>setSelected(null)}/>}
