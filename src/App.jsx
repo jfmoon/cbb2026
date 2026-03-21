@@ -1575,78 +1575,272 @@ function R64ResultsTable({ S }) {
   );
 }
 
-// ── KenPomCompare ─────────────────────────────────────────────────────────────
-function KenPomCompare({ S }) {
-  // R32 matchups: KenPom prediction vs jbGap signal
-  // KenPom data from FanMatch (2026-03-21)
-  const MATCHUPS = [
-    { dog:"(9) Saint Louis",  fav:"(1) Michigan",    kp_winner:"Michigan",    kp_pct:88, jb_delta:14.6, jb_tier:"Moderate gap", agree:true  },
-    { dog:"(9) TCU",          fav:"(1) Duke",         kp_winner:"Duke",        kp_pct:88, jb_delta:26.5, jb_tier:"Chalk",        agree:true  },
-    { dog:"(12) High Point",  fav:"(4) Arkansas",    kp_winner:"Arkansas",    kp_pct:87, jb_delta:20.7, jb_tier:"Lean favorite",agree:true  },
-    { dog:"(10) Texas A&M",   fav:"(2) Houston",     kp_winner:"Houston",     kp_pct:80, jb_delta:11.6, jb_tier:"Live underdog",agree:true  },
-    { dog:"(11) VCU",         fav:"(3) Illinois",    kp_winner:"Illinois",    kp_pct:81, jb_delta:12.4, jb_tier:"Live underdog",agree:true  },
-    { dog:"(11) Texas",       fav:"(3) Gonzaga",     kp_winner:"Gonzaga",     kp_pct:68, jb_delta:5.7,  jb_tier:"Danger zone",  agree:true  },
-    { dog:"(3) Michigan St",  fav:"(6) Louisville",  kp_winner:"Michigan St", kp_pct:59, jb_delta:2.2,  jb_tier:"Coin flip",    agree:false, note:"KP favors dog" },
-    { dog:"(4) Nebraska",     fav:"(5) Vanderbilt",  kp_winner:"Vanderbilt",  kp_pct:52, jb_delta:6.5,  jb_tier:"Danger zone",  agree:true  },
-    { dog:"(2) UConn",        fav:"(7) UCLA",        kp_winner:"UConn",       kp_pct:null, jb_delta:9.0, jb_tier:"Live underdog", agree:false, note:"jbGap favors UCLA" },
+// ── KenPomR64Compare ─────────────────────────────────────────────────────────
+function KenPomR64Compare({ S }) {
+  const [day, setDay] = useState("thu");
+
+  const THU = [
+    // Thursday March 19 — from FanMatch
+    { dog:"(9) Saint Louis",    fav:"(8) Georgia",      kp_winner:"Georgia",       kp_pct:55, jb_delta:0.3,   jb_tier:"Coin flip",    result:"UPSET", note:"jbGap agreed dog better" },
+    { dog:"(11) Texas",         fav:"(6) BYU",          kp_winner:"BYU",           kp_pct:60, jb_delta:5.7,   jb_tier:"Danger zone",  result:"UPSET", note:"KP & jb both wrong" },
+    { dog:"(10) Texas A&M",     fav:"(7) Saint Mary\'s", kp_winner:"Saint Mary\'s", kp_pct:61, jb_delta:1.1, jb_tier:"Coin flip",    result:"UPSET" },
+    { dog:"(11) VCU",           fav:"(6) N Carolina",   kp_winner:"N Carolina",    kp_pct:58, jb_delta:-1.9,  jb_tier:"Pick the dog", result:"UPSET", note:"jbGap correct" },
+    { dog:"(9) TCU",            fav:"(8) Ohio State",   kp_winner:"Ohio State",    kp_pct:61, jb_delta:8.9,   jb_tier:"Live underdog",result:"UPSET", note:"Both wrong" },
+    { dog:"(11) South Florida", fav:"(6) Louisville",   kp_winner:"Louisville",    kp_pct:72, jb_delta:10.6,  jb_tier:"Live underdog",result:"Fav won" },
+    { dog:"(12) McNeese",       fav:"(5) Vanderbilt",   kp_winner:"Vanderbilt",    kp_pct:82, jb_delta:24.2,  jb_tier:"Chalk",        result:"Fav won" },
+    { dog:"(12) High Point",    fav:"(5) Wisconsin",    kp_winner:"Wisconsin",     kp_pct:83, jb_delta:17.0,  jb_tier:"Lean favorite",result:"UPSET", note:"Both wrong — biggest miss" },
+    { dog:"(13) Hawai\'i",     fav:"(4) Arkansas",     kp_winner:"Arkansas",      kp_pct:91, jb_delta:39.8,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(14) N Dakota St",   fav:"(3) Michigan St",  kp_winner:"Michigan St",   kp_pct:92, jb_delta:19.4,  jb_tier:"Lean favorite",result:"Fav won" },
+    { dog:"(13) Troy",          fav:"(4) Nebraska",     kp_winner:"Nebraska",      kp_pct:92, jb_delta:33.8,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(14) Penn",          fav:"(3) Illinois",     kp_winner:"Illinois",      kp_pct:97, jb_delta:41.6,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(14) Kennesaw St",   fav:"(3) Gonzaga",      kp_winner:"Gonzaga",       kp_pct:96, jb_delta:34.6,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(15) Idaho",         fav:"(2) Houston",      kp_winner:"Houston",       kp_pct:97, jb_delta:42.3,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(16) Siena",         fav:"(1) Duke",         kp_winner:"Duke",          kp_pct:99, jb_delta:63.1,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(16) Howard",        fav:"(1) Michigan",     kp_winner:"Michigan",      kp_pct:99.6, jb_delta:48.1, jb_tier:"Blowout city", result:"Fav won" },
   ];
 
-  const agree = MATCHUPS.filter(m => m.agree).length;
-  const disagree = MATCHUPS.filter(m => !m.agree).length;
+  const FRI = [
+    // Friday March 20 — from FanMatch
+    { dog:"(10) Santa Clara",   fav:"(7) Kentucky",     kp_winner:"Kentucky",      kp_pct:56, jb_delta:2.9,   jb_tier:"Coin flip",    result:"Fav won" },
+    { dog:"(9) Utah State",     fav:"(8) Villanova",    kp_winner:"Utah State",    kp_pct:52, jb_delta:-3.5,  jb_tier:"Pick the dog", result:"UPSET", note:"Both correct" },
+    { dog:"(9) Iowa",           fav:"(8) Clemson",      kp_winner:"Iowa",          kp_pct:58, jb_delta:-4.6,  jb_tier:"Pick the dog", result:"UPSET", note:"Both correct" },
+    { dog:"(10) Missouri",      fav:"(7) Miami (FL)",   kp_winner:"Miami (FL)",    kp_pct:62, jb_delta:5.5,   jb_tier:"Danger zone",  result:"Fav won" },
+    { dog:"(10) UCF",           fav:"(7) UCLA",         kp_winner:"UCLA",          kp_pct:66, jb_delta:15.8,  jb_tier:"Lean favorite",result:"Fav won" },
+    { dog:"(12) Akron",         fav:"(5) Texas Tech",   kp_winner:"Texas Tech",    kp_pct:78, jb_delta:13.9,  jb_tier:"Moderate gap", result:"Fav won" },
+    { dog:"(12) N Iowa",        fav:"(5) St. John\'s", kp_winner:"St. John\'s",  kp_pct:80, jb_delta:21.6,  jb_tier:"Lean favorite",result:"Fav won" },
+    { dog:"(13) Hofstra",       fav:"(4) Alabama",      kp_winner:"Alabama",       kp_pct:85, jb_delta:28.4,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(11) Miami (Ohio)",  fav:"(6) Tennessee",    kp_winner:"Tennessee",     kp_pct:85, jb_delta:null,  jb_tier:"—",            result:"Fav won" },
+    { dog:"(13) Cal Baptist",   fav:"(4) Kansas",       kp_winner:"Kansas",        kp_pct:87, jb_delta:28.6,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(14) Wright State",  fav:"(3) Virginia",     kp_winner:"Virginia",      kp_pct:93, jb_delta:35.1,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(15) Queens",        fav:"(2) Purdue",       kp_winner:"Purdue",        kp_pct:98, jb_delta:45.7,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(15) Furman",        fav:"(2) UConn",        kp_winner:"UConn",         kp_pct:96, jb_delta:34.9,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(15) Tenn State",    fav:"(2) Iowa State",   kp_winner:"Iowa State",    kp_pct:98, jb_delta:54.9,  jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(16) LIU",           fav:"(1) Arizona",      kp_winner:"Arizona",       kp_pct:99.6, jb_delta:62.1, jb_tier:"Blowout city", result:"Fav won" },
+    { dog:"(16) Prairie View",  fav:"(1) Florida",      kp_winner:"Florida",       kp_pct:99.8, jb_delta:null, jb_tier:"—",            result:"Fav won" },
+  ];
+
+  const matchups = day === "thu" ? THU : FRI;
+  const upsets = matchups.filter(m => m.result === "UPSET");
+  const kpCorrect = matchups.filter(m => {
+    if (m.result === "UPSET") return m.kp_winner === m.dog.split(") ")[1];
+    return m.kp_winner !== m.dog.split(") ")[1];
+  }).length;
+
+  const tierColor = (tier) => {
+    if (!tier || tier === "—") return "#888";
+    if (tier === "Pick the dog" || tier === "Coin flip") return "#b91c1c";
+    if (tier === "Danger zone") return "#854d0e";
+    if (tier === "Live underdog") return "#b45309";
+    if (tier === "Moderate gap") return "#3f6212";
+    if (tier === "Lean favorite") return "#166534";
+    return "#0f766e";
+  };
 
   return (
-    <div style={S.card}>
-      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
-        <span style={{ padding:"2px 9px", borderRadius:10, fontSize:11, fontWeight:500, background:"rgba(124,58,237,0.1)", color:"#7c3aed" }}>vs KenPom</span>
-        <span style={{ fontSize:14, fontWeight:500, color:"var(--color-text-primary)" }}>R32 — jbScore vs KenPom predictions</span>
-        <span style={{ marginLeft:"auto", fontSize:12, color:"var(--color-text-tertiary)" }}>From FanMatch · 2026-03-21</span>
-      </div>
-
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10, marginBottom:14 }}>
-        <div style={S.metric}><div style={S.metricLabel}>Agreement</div><div style={S.metricValue}>{agree}/{MATCHUPS.length}</div><div style={S.metricSub}>Same winner predicted</div></div>
-        <div style={S.metric}><div style={S.metricLabel}>Disagreements</div><div style={S.metricValue}>{disagree}</div><div style={S.metricSub}>Models diverge</div></div>
-        <div style={S.metric}><div style={S.metricLabel}>KP confidence range</div><div style={S.metricValue}>52–88%</div><div style={S.metricSub}>Win probability</div></div>
-      </div>
-
-      <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
-        <thead>
-          <tr style={{ borderBottom:"0.5px solid var(--color-border-tertiary)" }}>
-            {["Matchup","KenPom pick","KP%","jbGap","jb tier","Signal"].map(h => (
-              <th key={h} style={{ textAlign:"left", padding:"5px 8px", fontSize:11, fontWeight:500, color:"var(--color-text-secondary)" }}>{h}</th>
+    <div>
+      <div style={S.card}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
+          <span style={{ padding:"2px 9px", borderRadius:10, fontSize:11, fontWeight:500, background:"rgba(124,58,237,0.1)", color:"#7c3aed" }}>vs KenPom</span>
+          <span style={{ fontSize:14, fontWeight:500, color:"var(--color-text-primary)" }}>R64 — jbScore vs KenPom predictions</span>
+          <div style={{ marginLeft:"auto", display:"flex", gap:4 }}>
+            {[["thu","Thu Mar 19"],["fri","Fri Mar 20"]].map(([val,label]) => (
+              <button key={val} onClick={() => setDay(val)} style={{
+                fontSize:11, padding:"3px 10px", borderRadius:6, cursor:"pointer",
+                border:"0.5px solid var(--color-border-secondary)", fontWeight: day===val ? 500 : 400,
+                background: day===val ? "var(--color-background-info)" : "var(--color-background-primary)",
+                color: day===val ? "var(--color-text-info)" : "var(--color-text-secondary)",
+              }}>{label}</button>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {MATCHUPS.sort((a,b) => b.kp_pct - a.kp_pct).map((m,i) => (
-            <tr key={i} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)", background: !m.agree ? "rgba(217,119,6,0.04)" : "transparent" }}>
-              <td style={{ padding:"7px 8px", color:"var(--color-text-primary)" }}>
-                <span style={{ fontWeight:500 }}>{m.dog}</span>
-                <span style={{ color:"var(--color-text-tertiary)" }}> vs {m.fav}</span>
-              </td>
-              <td style={{ padding:"7px 8px", fontWeight:500 }}>{m.kp_winner}</td>
-              <td style={{ padding:"7px 8px", fontFamily:"monospace", color: m.kp_pct >= 80 ? "#166534" : m.kp_pct <= 55 ? "#b45309" : "var(--color-text-secondary)" }}>
-                {m.kp_pct ? `${m.kp_pct}%` : "—"}
-              </td>
-              <td style={{ padding:"7px 8px", fontFamily:"monospace", color: m.jb_delta < 5 ? "#dc2626" : m.jb_delta < 17 ? "#b45309" : "var(--color-text-secondary)" }}>
-                +{m.jb_delta}
-              </td>
-              <td style={{ padding:"7px 8px", color:"var(--color-text-secondary)" }}>{m.jb_tier}</td>
-              <td style={{ padding:"7px 8px" }}>
-                {m.agree
-                  ? <span style={{ fontSize:11, fontWeight:500, color:"#166534", background:"rgba(22,101,52,0.1)", padding:"1px 7px", borderRadius:10 }}>Agree</span>
-                  : <span style={{ fontSize:11, fontWeight:500, color:"#92400e", background:"rgba(217,119,6,0.1)", padding:"1px 7px", borderRadius:10 }} title={m.note}>Diverge</span>
-                }
-              </td>
+          </div>
+        </div>
+
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10, marginBottom:14 }}>
+          <div style={S.metric}>
+            <div style={S.metricLabel}>KP confidence range</div>
+            <div style={S.metricValue}>{day==="thu"?"55–99.6%":"52–99.8%"}</div>
+            <div style={S.metricSub}>Win probability</div>
+          </div>
+          <div style={S.metric}>
+            <div style={S.metricLabel}>Upsets this day</div>
+            <div style={S.metricValue}>{upsets.length}</div>
+            <div style={S.metricSub}>of {matchups.length} games</div>
+          </div>
+          <div style={S.metric}>
+            <div style={S.metricLabel}>Danger zone games</div>
+            <div style={S.metricValue}>{matchups.filter(m => m.jb_delta !== null && m.jb_delta < 8).length}</div>
+            <div style={S.metricSub}>jbGap under 8</div>
+          </div>
+        </div>
+
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+          <thead>
+            <tr style={{ borderBottom:"0.5px solid var(--color-border-tertiary)" }}>
+              {["Matchup","KenPom pick","KP%","jbGap","jb tier","Result"].map(h => (
+                <th key={h} style={{ textAlign:"left", padding:"5px 8px", fontSize:11, fontWeight:500, color:"var(--color-text-secondary)" }}>{h}</th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <div style={{ marginTop:10, fontSize:11, color:"var(--color-text-tertiary)", lineHeight:1.6 }}>
-        Divergences: Louisville vs Michigan St — KenPom favors Michigan St (59%) while jbGap (2.2) calls it a coin flip with Louisville as listed favorite. UCLA vs UConn — jbGap has UCLA favored (+9.0) but UConn won as the lower seed; KenPom likely agreed with the upset.
+          </thead>
+          <tbody>
+            {[...matchups].sort((a,b) => (a.jb_delta??99) - (b.jb_delta??99)).map((m,i) => (
+              <tr key={i} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)", background: m.result==="UPSET" ? "rgba(220,38,38,0.04)" : "transparent" }}>
+                <td style={{ padding:"7px 8px" }}>
+                  <span style={{ fontWeight:500, color:"var(--color-text-primary)" }}>{m.dog}</span>
+                  <span style={{ color:"var(--color-text-tertiary)" }}> vs {m.fav}</span>
+                </td>
+                <td style={{ padding:"7px 8px", fontWeight:500, color:"var(--color-text-primary)" }}>{m.kp_winner}</td>
+                <td style={{ padding:"7px 8px", fontFamily:"monospace", color: m.kp_pct >= 85 ? "#166534" : m.kp_pct <= 62 ? "#b45309" : "var(--color-text-secondary)" }}>
+                  {m.kp_pct}%
+                </td>
+                <td style={{ padding:"7px 8px", fontFamily:"monospace", color: m.jb_delta === null ? "#888" : m.jb_delta < 0 ? "#dc2626" : m.jb_delta < 8 ? "#b45309" : "var(--color-text-secondary)" }}>
+                  {m.jb_delta === null ? "—" : (m.jb_delta > 0 ? "+" : "") + m.jb_delta}
+                </td>
+                <td style={{ padding:"7px 8px" }}>
+                  <span style={{ fontSize:10, padding:"1px 6px", borderRadius:4, background: tierColor(m.jb_tier)+"22", color: tierColor(m.jb_tier), fontWeight:500 }}>{m.jb_tier}</span>
+                </td>
+                <td style={{ padding:"7px 8px" }}>
+                  {m.result === "UPSET"
+                    ? <span style={{ fontSize:11, fontWeight:500, color:"#991b1b", background:"rgba(220,38,38,0.1)", padding:"1px 7px", borderRadius:10 }}>Upset</span>
+                    : <span style={{ fontSize:11, color:"var(--color-text-tertiary)" }}>Chalk</span>
+                  }
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {day === "thu" && (
+          <div style={{ marginTop:10, fontSize:11, color:"var(--color-text-tertiary)", lineHeight:1.6 }}>
+            Upsets: Saint Louis, Texas, Texas A&M, VCU, TCU, High Point. KenPom correctly called Iowa/Clemson and Utah St/Villanova direction (low confidence). Biggest shared miss: High Point over Wisconsin — both models had Wisconsin at 83%+.
+          </div>
+        )}
+        {day === "fri" && (
+          <div style={{ marginTop:10, fontSize:11, color:"var(--color-text-tertiary)", lineHeight:1.6 }}>
+            Both models agreed on direction for Iowa (KP 58%, jbGap -4.6) and Utah State (KP 52%, jbGap -3.5) — the two 8/9 upsets. No upsets from seed 12+ on Friday; all chalk below jbGap 15 held.
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+// ── KenPomR32Compare ─────────────────────────────────────────────────────────
+function KenPomR32Compare({ S }) {
+  const [day, setDay] = useState("sat");
+
+  const SAT = [
+    // Saturday March 21 — from FanMatch
+    { dog:"(9) Saint Louis",  fav:"(1) Michigan",    kp_winner:"Michigan",    kp_pct:88, jb_delta:14.6, jb_tier:"Moderate gap" },
+    { dog:"(9) TCU",          fav:"(1) Duke",         kp_winner:"Duke",        kp_pct:88, jb_delta:26.5, jb_tier:"Chalk"        },
+    { dog:"(12) High Point",  fav:"(4) Arkansas",    kp_winner:"Arkansas",    kp_pct:87, jb_delta:20.7, jb_tier:"Lean favorite"},
+    { dog:"(10) Texas A&M",   fav:"(2) Houston",     kp_winner:"Houston",     kp_pct:80, jb_delta:11.6, jb_tier:"Live underdog"},
+    { dog:"(11) VCU",         fav:"(3) Illinois",    kp_winner:"Illinois",    kp_pct:81, jb_delta:12.4, jb_tier:"Live underdog"},
+    { dog:"(11) Texas",       fav:"(3) Gonzaga",     kp_winner:"Gonzaga",     kp_pct:68, jb_delta:5.7,  jb_tier:"Danger zone"  },
+    { dog:"(3) Michigan St",  fav:"(6) Louisville",  kp_winner:"Michigan St", kp_pct:59, jb_delta:2.2,  jb_tier:"Coin flip", note:"KP favors dog" },
+    { dog:"(4) Nebraska",     fav:"(5) Vanderbilt",  kp_winner:"Vanderbilt",  kp_pct:52, jb_delta:6.5,  jb_tier:"Danger zone"  },
+    { dog:"(2) UConn",        fav:"(7) UCLA",        kp_winner:"UConn",       kp_pct:63, jb_delta:9.0,  jb_tier:"Live underdog", note:"jbGap favors UCLA" },
+  ];
+
+  const SUN = [
+    // Sunday March 22 — from FanMatch
+    { dog:"(5) Texas Tech",   fav:"(4) Alabama",     kp_winner:"Alabama",     kp_pct:51, jb_delta:6.5,  jb_tier:"Danger zone"  },
+    { dog:"(6) Tennessee",    fav:"(3) Virginia",    kp_winner:"Tennessee",   kp_pct:51, jb_delta:5.6,  jb_tier:"Danger zone", note:"KP favors dog" },
+    { dog:"(4) Kansas",       fav:"(5) St. John\'s",kp_winner:"St. John\'s",kp_pct:56, jb_delta:5.7,  jb_tier:"Danger zone"  },
+    { dog:"(7) Miami (FL)",   fav:"(2) Purdue",      kp_winner:"Purdue",      kp_pct:73, jb_delta:16.1, jb_tier:"Lean favorite"},
+    { dog:"(9) Iowa",         fav:"(1) Florida",     kp_winner:"Florida",     kp_pct:75, jb_delta:5.1,  jb_tier:"Danger zone"  },
+    { dog:"(7) Kentucky",     fav:"(2) Iowa State",  kp_winner:"Iowa State",  kp_pct:75, jb_delta:15.7, jb_tier:"Lean favorite"},
+    { dog:"(9) Utah State",   fav:"(1) Arizona",     kp_winner:"Arizona",     kp_pct:85, jb_delta:14.6, jb_tier:"Moderate gap" },
+  ];
+
+  const matchups = day === "sat" ? SAT : SUN;
+  const agree = matchups.filter(m => !m.note || !m.note.includes("favors dog")).length;
+
+  const tierColor = (tier) => {
+    if (tier === "Coin flip" || tier === "Danger zone") return "#854d0e";
+    if (tier === "Live underdog") return "#b45309";
+    if (tier === "Moderate gap") return "#3f6212";
+    if (tier === "Lean favorite") return "#166534";
+    return "#0f766e";
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom:"1rem", padding:"0.75rem 1rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)", fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.6 }}>
+        Round of 32 — 16 games across Mar 21–22. KenPom predictions from FanMatch vs jbScore signal. Full results analysis added after games conclude.
+      </div>
+
+      <div style={S.card}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
+          <span style={{ padding:"2px 9px", borderRadius:10, fontSize:11, fontWeight:500, background:"rgba(124,58,237,0.1)", color:"#7c3aed" }}>vs KenPom</span>
+          <span style={{ fontSize:14, fontWeight:500, color:"var(--color-text-primary)" }}>R32 — jbScore vs KenPom predictions</span>
+          <div style={{ marginLeft:"auto", display:"flex", gap:4 }}>
+            {[["sat","Sat Mar 21"],["sun","Sun Mar 22"]].map(([val,label]) => (
+              <button key={val} onClick={() => setDay(val)} style={{
+                fontSize:11, padding:"3px 10px", borderRadius:6, cursor:"pointer",
+                border:"0.5px solid var(--color-border-secondary)", fontWeight: day===val ? 500 : 400,
+                background: day===val ? "var(--color-background-info)" : "var(--color-background-primary)",
+                color: day===val ? "var(--color-text-info)" : "var(--color-text-secondary)",
+              }}>{label}</button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10, marginBottom:14 }}>
+          <div style={S.metric}><div style={S.metricLabel}>KP confidence range</div><div style={S.metricValue}>{day==="sat"?"52–88%":"51–85%"}</div><div style={S.metricSub}>Win probability</div></div>
+          <div style={S.metric}><div style={S.metricLabel}>Danger zone games</div><div style={S.metricValue}>{matchups.filter(m=>m.jb_delta<8).length}</div><div style={S.metricSub}>jbGap under 8</div></div>
+          <div style={S.metric}><div style={S.metricLabel}>Model divergences</div><div style={S.metricValue}>{matchups.filter(m=>m.note).length}</div><div style={S.metricSub}>KP and jbGap disagree</div></div>
+        </div>
+
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+          <thead>
+            <tr style={{ borderBottom:"0.5px solid var(--color-border-tertiary)" }}>
+              {["Matchup","KenPom pick","KP%","jbGap","jb tier","Signal"].map(h => (
+                <th key={h} style={{ textAlign:"left", padding:"5px 8px", fontSize:11, fontWeight:500, color:"var(--color-text-secondary)" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[...matchups].sort((a,b) => b.kp_pct - a.kp_pct).map((m,i) => (
+              <tr key={i} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)", background: m.note ? "rgba(217,119,6,0.04)" : "transparent" }}>
+                <td style={{ padding:"7px 8px" }}>
+                  <span style={{ fontWeight:500, color:"var(--color-text-primary)" }}>{m.dog}</span>
+                  <span style={{ color:"var(--color-text-tertiary)" }}> vs {m.fav}</span>
+                </td>
+                <td style={{ padding:"7px 8px", fontWeight:500, color:"var(--color-text-primary)" }}>{m.kp_winner}</td>
+                <td style={{ padding:"7px 8px", fontFamily:"monospace", color: m.kp_pct >= 75 ? "#166534" : m.kp_pct <= 56 ? "#b45309" : "var(--color-text-secondary)" }}>
+                  {m.kp_pct}%
+                </td>
+                <td style={{ padding:"7px 8px", fontFamily:"monospace", color: m.jb_delta < 8 ? "#dc2626" : m.jb_delta < 17 ? "#b45309" : "var(--color-text-secondary)" }}>
+                  +{m.jb_delta}
+                </td>
+                <td style={{ padding:"7px 8px" }}>
+                  <span style={{ fontSize:10, padding:"1px 6px", borderRadius:4, background: tierColor(m.jb_tier)+"22", color: tierColor(m.jb_tier), fontWeight:500 }}>{m.jb_tier}</span>
+                </td>
+                <td style={{ padding:"7px 8px" }}>
+                  {m.note
+                    ? <span style={{ fontSize:11, fontWeight:500, color:"#92400e", background:"rgba(217,119,6,0.1)", padding:"1px 7px", borderRadius:10 }} title={m.note}>⚡ Diverge</span>
+                    : <span style={{ fontSize:11, fontWeight:500, color:"#166534", background:"rgba(22,101,52,0.1)", padding:"1px 7px", borderRadius:10 }}>Agree</span>
+                  }
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {day === "sat" && (
+          <div style={{ marginTop:10, fontSize:11, color:"var(--color-text-tertiary)", lineHeight:1.6 }}>
+            Key divergences: <strong style={{ color:"var(--color-text-secondary)" }}>Louisville vs Michigan St</strong> — KP favors MSU (59%), jbGap 2.2 calls it a coin flip. <strong style={{ color:"var(--color-text-secondary)" }}>UCLA vs UConn</strong> — jbGap has UCLA listed as fav (+9.0) but KP picks UConn (63%).
+          </div>
+        )}
+        {day === "sun" && (
+          <div style={{ marginTop:10, fontSize:11, color:"var(--color-text-tertiary)", lineHeight:1.6 }}>
+            Key divergences: <strong style={{ color:"var(--color-text-secondary)" }}>Tennessee vs Virginia</strong> — KP favors Tennessee (51%) despite Virginia listed as jbGap fav (+5.6). Five games under jbGap 8 — Sunday is the more volatile day.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 
 // ── FormulaResultsTab ────────────────────────────────────────────────────────
@@ -1734,6 +1928,8 @@ function FormulaResultsTab() {
       <div style={{ marginBottom:"1rem", padding:"0.75rem 1rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)", fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.6 }}>
         Post-tournament formula analysis — 28 First Round games (2026-03-19/20). jbScore/jbGap and Upset Score evaluated separately against actual results.
       </div>
+
+      <KenPomR64Compare S={S}/>
 
       {/* ── FORMULA 1: jbScore / jbGap ── */}
       <div style={S.card}>
@@ -1871,19 +2067,11 @@ function FormulaResultsTab() {
 
       {/* ── All R64 results ── */}
       <R64ResultsTable S={S}/>
-
-
-        <KenPomCompare S={S}/>
       </div>}
 
-      {/* R32 content — stub until games complete */}
+      {/* R32 content — KenPom comparison + results after games finish */}
       {R32_CONTENT && <div>
-        <div style={{ marginBottom:"1rem", padding:"0.75rem 1rem", background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-lg)", border:"0.5px solid var(--color-border-tertiary)", fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.6 }}>
-          Round of 32 games on 2026-03-22/23. Formula results will be added here after all games finish.
-        </div>
-        <div style={{ padding:"3rem 1rem", textAlign:"center", color:"var(--color-text-tertiary)", fontSize:13, border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)" }}>
-          Results pending — check back after Round of 32 concludes.
-        </div>
+        <KenPomR32Compare S={S}/>
       </div>}
 
       {/* Future rounds — stub */}
