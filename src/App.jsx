@@ -155,18 +155,40 @@ function useScores() {
   const [error, setError]           = useState(null);
   const fetchingRef                 = useRef(false); // in-flight guard
 
+  // Frontend name normalization — catches any ESPN variants that slipped through the scraper
+  const ESPN_NAME_MAP = {
+    "Pennsylvania": "Penn", "Pennsylvania Quakers": "Penn", "Penn Quakers": "Penn",
+    "Queens (NC)": "Queens", "Queens (NC) Royals": "Queens", "Queens Royals": "Queens",
+    "Long Island Univ.": "Long Island University", "LIU Sharks": "Long Island University",
+    "Long Island University Sharks": "Long Island University",
+    "North Dakota St.": "North Dakota State", "North Dakota State Bison": "North Dakota State",
+    "Kennesaw St.": "Kennesaw State", "Kennesaw State Owls": "Kennesaw State",
+    "Wright St.": "Wright State", "Wright State Raiders": "Wright State",
+    "Tennessee St.": "Tennessee State", "Tennessee State Tigers": "Tennessee State",
+    "Miami (OH)": "Miami (Ohio)", "Miami (OH) RedHawks": "Miami (Ohio)", "Miami RedHawks": "Miami (Ohio)",
+    "Connecticut": "UConn", "Connecticut Huskies": "UConn", "UConn Huskies": "UConn",
+    "Saint Mary's (CA)": "Saint Mary's", "Saint Mary's Gaels": "Saint Mary's",
+    "California Baptist": "Cal Baptist", "California Baptist Lancers": "Cal Baptist", "Cal Baptist Lancers": "Cal Baptist",
+    "Hawai'i Rainbow Warriors": "Hawai'i", "Hawaii Rainbow Warriors": "Hawai'i",
+    "Prairie View A&M Panthers": "Prairie View A&M", "Prairie View": "Prairie View A&M",
+    "Northern Iowa Panthers": "Northern Iowa",
+  };
+  function normalizeName(n) { return ESPN_NAME_MAP[n] ?? n; }
+
   function buildLookup(games) {
     // Store as array of results per team — a team can appear multiple times
     // (e.g. Howard in First Four AND First Round)
     const map = {};
     for (const g of games) {
       if (g.state === "pre") continue;
+      const t1 = normalizeName(g.t1_name);
+      const t2 = normalizeName(g.t2_name);
       const entry1 = { score:g.t1_score, opp:g.t2_score, winner:g.t1_winner, detail:g.detail, state:g.state, date:g.date };
       const entry2 = { score:g.t2_score, opp:g.t1_score, winner:g.t2_winner, detail:g.detail, state:g.state, date:g.date };
-      if (!map[g.t1_name]) map[g.t1_name] = [];
-      if (!map[g.t2_name]) map[g.t2_name] = [];
-      map[g.t1_name].push(entry1);
-      map[g.t2_name].push(entry2);
+      if (!map[t1]) map[t1] = [];
+      if (!map[t2]) map[t2] = [];
+      map[t1].push(entry1);
+      map[t2].push(entry2);
     }
     return map;
   }
