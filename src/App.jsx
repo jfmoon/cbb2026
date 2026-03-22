@@ -14,7 +14,29 @@
 // Sources: KenPom (subscription), EvanMiya (subscription)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, createContext, useContext } from "react";
+
+function gapColor(delta) {
+  if (delta < 0)  return { bg: "#b91c1c", text: "#fecaca", border: "#dc2626" };
+  if (delta < 5)  return { bg: "#c2410c", text: "#fed7aa", border: "#ea580c" };
+  if (delta < 8)  return { bg: "#854d0e", text: "#fef08a", border: "#ca8a04" };
+  if (delta < 13) return { bg: "#b45309", text: "#fde68a", border: "#d97706" };
+  if (delta < 17) return { bg: "#3f6212", text: "#d9f99d", border: "#65a30d" };
+  if (delta < 23) return { bg: "#166534", text: "#bbf7d0", border: "#16a34a" };
+  if (delta < 35) return { bg: "#0f766e", text: "#99f6e4", border: "#0d9488" };
+  return              { bg: "#1d4ed8", text: "#bfdbfe", border: "#3b82f6" };
+}
+
+function gapLabel(delta) {
+  if (delta < 0)  return "🔥 Pick the dog";
+  if (delta < 5)  return "Coin flip";
+  if (delta < 8)  return "Danger zone";
+  if (delta < 13) return "Live underdog";
+  if (delta < 17) return "Moderate gap";
+  if (delta < 23) return "Lean favorite";
+  if (delta < 35) return "Chalk";
+  return "Blowout city";
+}
 
 const _css = `
 :root {
@@ -428,7 +450,9 @@ function formatML(ml){
   return{display:ml,prob:prob.toFixed(0)};
 }
 
-function MatchupCard({ matchup, onTeamClick, scores, odds }) {
+function MatchupCard({ matchup, onTeamClick }) {
+  const { scores, liveOdds } = useTournament();
+  const odds = liveOdds;
   const [expanded, setExpanded] = useState(false);
   const { team1, team2, site, date, time } = matchup;
   const a1 = team1 ? ARCH_MAP[team1.archetype] : null;
@@ -511,13 +535,13 @@ function MatchupCard({ matchup, onTeamClick, scores, odds }) {
         <div style={{ display:"grid", gridTemplateColumns:"1fr 64px 1fr", borderBottom:"0.5px solid var(--color-border-tertiary)", background:"var(--color-background-secondary)" }}>
           <div style={{ padding:"5px 12px" }}>
             {sprd1 && <span style={{ fontSize:12, fontWeight:600, color:parseFloat(o1.s)<0?"#1a6b3a":"var(--color-text-secondary)" }}>{sprd1}</span>}
-            {o1?.ml && <span style={{ fontSize:11, color:"var(--color-text-tertiary)", marginLeft:6 }}>{o1.ml}</span>}
+            {o1?.ml && (() => { const f = formatML(o1.ml); return f ? <span style={{ fontSize:11, color:"var(--color-text-tertiary)", marginLeft:6 }}>{f.display} <span style={{ color:"var(--color-text-tertiary)", fontSize:10 }}>({f.prob}%)</span></span> : null; })()}
           </div>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, color:"var(--color-text-tertiary)", borderLeft:"0.5px solid var(--color-border-tertiary)", borderRight:"0.5px solid var(--color-border-tertiary)", textAlign:"center", lineHeight:1.3 }}>
             {o1?.ou ? <>O/U<br/>{o1.ou}</> : "—"}
           </div>
           <div style={{ padding:"5px 12px", textAlign:"right" }}>
-            {o2?.ml && <span style={{ fontSize:11, color:"var(--color-text-tertiary)", marginRight:6 }}>{o2.ml}</span>}
+            {o2?.ml && (() => { const f = formatML(o2.ml); return f ? <span style={{ fontSize:11, color:"var(--color-text-tertiary)", marginRight:6 }}><span style={{ color:"var(--color-text-tertiary)", fontSize:10 }}>({f.prob}%)</span> {f.display}</span> : null; })()}
             {sprd2 && <span style={{ fontSize:12, fontWeight:600, color:parseFloat(o2.s)<0?"#1a6b3a":"var(--color-text-secondary)" }}>{sprd2}</span>}
           </div>
         </div>
@@ -584,7 +608,10 @@ function MatchupCard({ matchup, onTeamClick, scores, odds }) {
 }
 
 // ── Matchups Tab ──────────────────────────────────────────────────────────────
-function MatchupsTab({ onTeamClick, scores, lastUpdate, odds }) {
+function MatchupsTab() {
+  const { scores, lastUpdate, liveOdds, setSelectedTeam } = useTournament();
+  const onTeamClick = setSelectedTeam;
+  const odds = liveOdds;
   const [filterRegion,  setFilterRegion]  = useState("All");
   const [filterRound,   setFilterRound]   = useState("All");
   const [sortBy,        setSortBy]        = useState("time");
@@ -689,7 +716,7 @@ function MatchupsTab({ onTeamClick, scores, lastUpdate, odds }) {
               </span>
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:"0.75rem" }}>
-              {games.map((m, i) => <MatchupCard key={i} matchup={m} onTeamClick={onTeamClick} scores={scores} odds={odds}/>)}
+              {games.map((m, i) => <MatchupCard key={i} matchup={m} onTeamClick={onTeamClick}/>)}
             </div>
           </div>
         );
@@ -699,7 +726,9 @@ function MatchupsTab({ onTeamClick, scores, lastUpdate, odds }) {
 }
 
 // ── Classifier Tab ────────────────────────────────────────────────────────────
-function ClassifierTab({ onTeamClick, scores }) {
+function ClassifierTab() {
+  const { scores, setSelectedTeam } = useTournament();
+  const onTeamClick = setSelectedTeam;
   const [filterRegion, setFilterRegion] = useState("All");
   const [filterArch,   setFilterArch]   = useState("All");
   const [filterPace,   setFilterPace]   = useState("All");
@@ -1351,6 +1380,27 @@ function CompareTab({ onTeamClick }) {
 }
 
 const TEAMS_BY_NAME = Object.fromEntries(TEAMS_WITH_CP.map(t => [t.name, t]));
+
+// ── Tournament Context ────────────────────────────────────────────────────────
+const TournamentContext = createContext(null);
+
+function TournamentProvider({ children }) {
+  const { scores, lastUpdate, error: scoresError } = useScores();
+  const liveOdds = useOdds();
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  return (
+    <TournamentContext.Provider value={{ scores, lastUpdate, scoresError, liveOdds, selectedTeam, setSelectedTeam }}>
+      {children}
+    </TournamentContext.Provider>
+  );
+}
+
+function useTournament() {
+  const ctx = useContext(TournamentContext);
+  if (!ctx) throw new Error("useTournament must be used inside <TournamentProvider>");
+  return ctx;
+}
+
 
 function PicksTab({ onTeamClick, scores, odds }) {
   const [sortBy,       setSortBy]      = useState("time");
@@ -2292,11 +2342,9 @@ function FormulaResultsTab({ scores }) {
 
 
 // ── Root ──────────────────────────────────────────────────────────────────────
-export default function App() {
-  const [tab,      setTab]      = useState("classifier");
-  const { scores, lastUpdate } = useScores();
-  const liveOdds = useOdds();  // "classifier" | "matchups" | "glossary"
-  const [selected, setSelected] = useState(null);
+function AppShell() {
+  const [tab, setTab] = useState("classifier");
+  const { scores, lastUpdate, liveOdds, selectedTeam, setSelectedTeam } = useTournament();
 
   const tabs = [
     { id: "classifier",  label: "Team Classifier" },
@@ -2317,29 +2365,37 @@ export default function App() {
         </h1>
 
         {/* Tab bar */}
-        <div style={{ display:"flex", gap:0, borderBottom:"0.5px solid var(--color-border-tertiary)" }}>
+        <div style={{ display:"flex", gap:0, borderBottom:"0.5px solid var(--color-border-tertiary)", overflowX:"auto", whiteSpace:"nowrap" }}>
           {tabs.map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} style={{
               padding:"8px 16px", fontSize:13, fontWeight:tab===t.id?600:400,
               color:tab===t.id?"var(--color-text-primary)":"var(--color-text-tertiary)",
               background:"transparent", border:"none", cursor:"pointer",
               borderBottom:tab===t.id?"2px solid var(--color-text-primary)":"2px solid transparent",
-              marginBottom:"-0.5px", transition:"all 0.1s",
+              marginBottom:"-0.5px", transition:"all 0.1s", whiteSpace:"nowrap",
             }}>{t.label}</button>
           ))}
         </div>
       </div>
 
-      {/* Tab content */}
-      {tab==="classifier" && <ClassifierTab onTeamClick={setSelected} scores={scores}/>}
-      {tab==="matchups"   && <MatchupsTab   onTeamClick={setSelected} scores={scores} lastUpdate={lastUpdate} odds={liveOdds}/>}
+      {/* Tab content — tabs read scores/odds from context directly */}
+      {tab==="classifier" && <ClassifierTab onTeamClick={setSelectedTeam} scores={scores}/>}
+      {tab==="matchups"   && <MatchupsTab   onTeamClick={setSelectedTeam} scores={scores} lastUpdate={lastUpdate} odds={liveOdds}/>}
       {tab==="glossary"   && <GlossaryTab/>}
-      {tab==="picks"      && <PicksTab onTeamClick={setSelected} scores={scores} odds={liveOdds}/>}
+      {tab==="picks"      && <PicksTab onTeamClick={setSelectedTeam} scores={scores} odds={liveOdds}/>}
       {tab==="results"    && <FormulaResultsTab scores={scores}/>}
-      {tab==="compare"    && <CompareTab onTeamClick={setSelected}/>}
+      {tab==="compare"    && <CompareTab onTeamClick={setSelectedTeam}/>}
 
-      {/* Team detail modal — available from both tabs */}
-      {selected && <TeamModal team={selected} onClose={()=>setSelected(null)}/>}
+      {/* Team detail modal */}
+      {selectedTeam && <TeamModal team={selectedTeam} onClose={()=>setSelectedTeam(null)}/>}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <TournamentProvider>
+      <AppShell />
+    </TournamentProvider>
   );
 }
