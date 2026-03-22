@@ -200,7 +200,7 @@ function useScores() {
     }
 
     fetchScores();
-    const interval = setInterval(fetchScores, 10 * 60 * 1000); // 10 min during tournament
+    const interval = setInterval(fetchScores, 2 * 60 * 1000); // 2 min for live tournament scores
     return () => {
       controller.abort();
       clearInterval(interval);
@@ -696,7 +696,11 @@ function MatchupsTab() {
         <span style={{ fontSize:11, color:"var(--color-text-tertiary)" }}>{matchups.length} matchup{matchups.length!==1?"s":""}</span>
         <span style={{ fontSize:10, color:"var(--color-text-tertiary)", marginLeft:"auto" }}>
           {lastUpdate
-            ? `Scores updated ${new Date(lastUpdate).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}`
+            ? (() => {
+                const diff = Math.floor((Date.now() - new Date(lastUpdate).getTime()) / 1000);
+                const rel = diff < 60 ? `${diff}s ago` : diff < 3600 ? `${Math.floor(diff/60)}m ago` : `${Math.floor(diff/3600)}h ago`;
+                return `Scores updated ${rel}`;
+              })()
             : Object.keys(scores).length > 0
               ? `${Object.keys(scores).length} scores loaded`
               : "scores pending"}
@@ -1404,7 +1408,7 @@ function useTournament() {
 
 function PicksTab({ onTeamClick, scores, odds }) {
   const [sortBy,       setSortBy]      = useState("time");
-  const [hideFinished, setHideFinished] = useState(false);
+  const [hideFinished, setHideFinished] = useState(true);
   const [filterRegion, setFilterRegion] = useState("All");
   const [filterTier, setFilterTier]   = useState("All");
   const [filterRound,  setFilterRound]  = useState("All");
@@ -1544,6 +1548,21 @@ function PicksTab({ onTeamClick, scores, odds }) {
         <span style={{ fontSize:11, color:"var(--color-text-tertiary)", marginLeft:"auto" }}>{filtered.length} matchup{filtered.length!==1?"s":""}</span>
       </div>
 
+      {/* jbScore vs KenPom analysis — shown at top, changes with round filter */}
+      {(() => {
+        const S = {
+          card: { background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", padding:"1rem 1.25rem", marginBottom:"1rem" },
+          metric: { background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-md)", padding:"12px 14px" },
+          metricLabel: { fontSize:11, color:"var(--color-text-secondary)", marginBottom:3 },
+          metricValue: { fontSize:22, fontWeight:500, color:"var(--color-text-primary)", lineHeight:1.2 },
+          metricSub: { fontSize:11, color:"var(--color-text-tertiary)", marginTop:2 },
+          sectionTitle: { fontSize:11, fontWeight:500, color:"var(--color-text-secondary)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10, paddingBottom:6, borderBottom:"0.5px solid var(--color-border-tertiary)" },
+        };
+        if (filterRound === "R32") return <div style={{ marginBottom:"1.5rem" }}><KenPomR32Compare S={S}/></div>;
+        if (filterRound === "All" || filterRound === "R64") return <div style={{ marginBottom:"1.5rem" }}><KenPomR64Compare S={S}/></div>;
+        return null;
+      })()}
+
       {/* Matchup cards */}
       {filtered.length === 0 && (
         <div style={{ textAlign:"center", padding:"3rem 1rem", color:"var(--color-text-tertiary)", fontSize:13, border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)" }}>
@@ -1647,18 +1666,6 @@ function PicksTab({ onTeamClick, scores, odds }) {
         <strong style={{ color:"var(--color-text-secondary)" }}>jbScore:</strong> 13 KenPom stats + Barthag, RR, EM Rank, KP Rank — normalized to the 2026 field (0–100). Range this year: 11.3 (Lehigh) – 82.3 (Duke).{" "}
         <strong style={{ color:"var(--color-text-secondary)" }}>jbGap:</strong> jbScore difference between favorite and underdog. Card header color = heatmap — deep red (toss-up) → blue (blowout likely).{" "}
         <strong style={{ color:"var(--color-text-secondary)" }}>Upset Score:</strong> possession-volatility composite for the underdog (TO differential 25%, 3P volatility 20%, ORB 20%, FTR 15%, arc defense 10%, tempo 10%).
-      </div>
-
-      {/* jbScore vs KenPom analysis */}
-      <div style={{ marginTop:"2rem" }}>
-        <KenPomR64Compare S={{
-          card: { background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", padding:"1rem 1.25rem", marginBottom:"1rem" },
-          metric: { background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-md)", padding:"12px 14px" },
-          metricLabel: { fontSize:11, color:"var(--color-text-secondary)", marginBottom:3 },
-          metricValue: { fontSize:22, fontWeight:500, color:"var(--color-text-primary)", lineHeight:1.2 },
-          metricSub: { fontSize:11, color:"var(--color-text-tertiary)", marginTop:2 },
-          sectionTitle: { fontSize:11, fontWeight:500, color:"var(--color-text-secondary)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10, paddingBottom:6, borderBottom:"0.5px solid var(--color-border-tertiary)" },
-        }}/>
       </div>
     </div>
   );
