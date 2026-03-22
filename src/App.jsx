@@ -1648,6 +1648,18 @@ function PicksTab({ onTeamClick, scores, odds }) {
         <strong style={{ color:"var(--color-text-secondary)" }}>jbGap:</strong> jbScore difference between favorite and underdog. Card header color = heatmap — deep red (toss-up) → blue (blowout likely).{" "}
         <strong style={{ color:"var(--color-text-secondary)" }}>Upset Score:</strong> possession-volatility composite for the underdog (TO differential 25%, 3P volatility 20%, ORB 20%, FTR 15%, arc defense 10%, tempo 10%).
       </div>
+
+      {/* jbScore vs KenPom analysis */}
+      <div style={{ marginTop:"2rem" }}>
+        <KenPomR64Compare S={{
+          card: { background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)", padding:"1rem 1.25rem", marginBottom:"1rem" },
+          metric: { background:"var(--color-background-secondary)", borderRadius:"var(--border-radius-md)", padding:"12px 14px" },
+          metricLabel: { fontSize:11, color:"var(--color-text-secondary)", marginBottom:3 },
+          metricValue: { fontSize:22, fontWeight:500, color:"var(--color-text-primary)", lineHeight:1.2 },
+          metricSub: { fontSize:11, color:"var(--color-text-tertiary)", marginTop:2 },
+          sectionTitle: { fontSize:11, fontWeight:500, color:"var(--color-text-secondary)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10, paddingBottom:6, borderBottom:"0.5px solid var(--color-border-tertiary)" },
+        }}/>
+      </div>
     </div>
   );
 }
@@ -1658,35 +1670,45 @@ function R64ResultsTable({ S }) {
   const [showAll, setShowAll] = useState(false);
 
   const ALL_GAMES = [
-    { fav:"(8) Clemson",          dog:"(9) Iowa",              delta:-4.6, uScore:-0.8,  winner:"Iowa",          score:"67-61",  upset:true  },
-    { fav:"(8) Villanova",        dog:"(9) Utah State",        delta:-3.5, uScore:6.7,   winner:"Utah State",    score:"86-76",  upset:true  },
-    { fav:"(6) North Carolina",   dog:"(11) VCU",              delta:-1.9, uScore:11.6,  winner:"VCU",           score:"82-78",  upset:true  },
-    { fav:"(8) Georgia",          dog:"(9) Saint Louis",       delta:0.3,  uScore:-3.5,  winner:"Saint Louis",   score:"102-77", upset:true  },
-    { fav:"(7) Saint Mary\'s",   dog:"(10) Texas A&M",        delta:1.1,  uScore:12.3,  winner:"Texas A&M",     score:"63-50",  upset:true  },
-    { fav:"(7) Kentucky",         dog:"(10) Santa Clara",      delta:2.9,  uScore:1.1,   winner:"Kentucky",      score:"89-84",  upset:false },
-    { fav:"(7) Miami (FL)",       dog:"(10) Missouri",         delta:5.5,  uScore:-4.4,  winner:"Miami (FL)",    score:"80-66",  upset:false },
-    { fav:"(8) Ohio State",       dog:"(9) TCU",               delta:8.9,  uScore:5.7,   winner:"TCU",           score:"66-64",  upset:true  },
-    { fav:"(6) Louisville",       dog:"(11) South Florida",    delta:10.6, uScore:8.8,   winner:"Louisville",    score:"83-79",  upset:false },
-    { fav:"(5) Texas Tech",       dog:"(12) Akron",            delta:13.9, uScore:2.0,   winner:"Texas Tech",    score:"91-71",  upset:false },
-    { fav:"(7) UCLA",             dog:"(10) UCF",              delta:15.8, uScore:-6.0,  winner:"UCLA",          score:"75-71",  upset:false },
-    { fav:"(5) Wisconsin",        dog:"(12) High Point",       delta:17.0, uScore:16.1,  winner:"High Point",    score:"83-82",  upset:true  },
-    { fav:"(3) Michigan State",   dog:"(14) N Dakota State",   delta:19.4, uScore:3.7,   winner:"Michigan State",score:"92-67",  upset:false },
-    { fav:"(5) St. John\'s",     dog:"(12) Northern Iowa",    delta:21.6, uScore:-23.9, winner:"St. John\'s",  score:"79-53",  upset:false },
-    { fav:"(5) Vanderbilt",       dog:"(12) McNeese",          delta:24.2, uScore:-0.8,  winner:"Vanderbilt",    score:"78-68",  upset:false },
-    { fav:"(4) Alabama",          dog:"(13) Hofstra",          delta:28.4, uScore:-18.6, winner:"Alabama",       score:"90-70",  upset:false },
-    { fav:"(4) Kansas",           dog:"(13) Cal Baptist",      delta:28.6, uScore:2.2,   winner:"Kansas",        score:"68-60",  upset:false },
-    { fav:"(4) Nebraska",         dog:"(13) Troy",             delta:33.8, uScore:0.7,   winner:"Nebraska",      score:"76-47",  upset:false },
-    { fav:"(3) Gonzaga",          dog:"(14) Kennesaw State",   delta:34.6, uScore:3.6,   winner:"Gonzaga",       score:"73-64",  upset:false },
-    { fav:"(2) UConn",            dog:"(15) Furman",           delta:34.9, uScore:-10.4, winner:"UConn",         score:"82-71",  upset:false },
-    { fav:"(3) Virginia",         dog:"(14) Wright State",     delta:35.1, uScore:-9.0,  winner:"Virginia",      score:"82-73",  upset:false },
-    { fav:"(4) Arkansas",         dog:"(13) Hawai\'i",        delta:39.8, uScore:-10.2, winner:"Arkansas",      score:"97-78",  upset:false },
-    { fav:"(3) Illinois",         dog:"(14) Penn",             delta:41.6, uScore:-6.1,  winner:"Illinois",      score:"105-70", upset:false },
-    { fav:"(2) Houston",          dog:"(15) Idaho",            delta:42.3, uScore:-7.6,  winner:"Houston",       score:"78-47",  upset:false },
-    { fav:"(2) Purdue",           dog:"(15) Queens",           delta:45.7, uScore:1.4,   winner:"Purdue",        score:"104-71", upset:false },
-    { fav:"(2) Iowa State",       dog:"(15) Tenn. State",      delta:54.9, uScore:-8.9,  winner:"Iowa State",    score:"108-74", upset:false },
-    { fav:"(1) Arizona",          dog:"(16) Long Island",      delta:62.1, uScore:-15.0, winner:"Arizona",       score:"92-58",  upset:false },
-    { fav:"(1) Duke",             dog:"(16) Siena",            delta:63.1, uScore:-24.3, winner:"Duke",          score:"71-65",  upset:false },
-  ];
+    { fav:"(8) Clemson",          dog:"(9) Iowa",              delta:-4.6, uScore:-0.8,  winner:"Iowa",          score:"67-61" },
+    { fav:"(8) Villanova",        dog:"(9) Utah State",        delta:-3.5, uScore:6.7,   winner:"Utah State",    score:"86-76" },
+    { fav:"(6) North Carolina",   dog:"(11) VCU",              delta:-1.9, uScore:11.6,  winner:"VCU",           score:"82-78" },
+    { fav:"(8) Georgia",          dog:"(9) Saint Louis",       delta:0.3,  uScore:-3.5,  winner:"Saint Louis",   score:"102-77" },
+    { fav:"(7) Saint Mary\'s",   dog:"(10) Texas A&M",        delta:1.1,  uScore:12.3,  winner:"Texas A&M",     score:"63-50" },
+    { fav:"(7) Kentucky",         dog:"(10) Santa Clara",      delta:2.9,  uScore:1.1,   winner:"Kentucky",      score:"89-84" },
+    { fav:"(7) Miami (FL)",       dog:"(10) Missouri",         delta:5.5,  uScore:-4.4,  winner:"Miami (FL)",    score:"80-66" },
+    { fav:"(8) Ohio State",       dog:"(9) TCU",               delta:8.9,  uScore:5.7,   winner:"TCU",           score:"66-64" },
+    { fav:"(6) Louisville",       dog:"(11) South Florida",    delta:10.6, uScore:8.8,   winner:"Louisville",    score:"83-79" },
+    { fav:"(5) Texas Tech",       dog:"(12) Akron",            delta:13.9, uScore:2.0,   winner:"Texas Tech",    score:"91-71" },
+    { fav:"(7) UCLA",             dog:"(10) UCF",              delta:15.8, uScore:-6.0,  winner:"UCLA",          score:"75-71" },
+    { fav:"(5) Wisconsin",        dog:"(12) High Point",       delta:17.0, uScore:16.1,  winner:"High Point",    score:"83-82" },
+    { fav:"(3) Michigan State",   dog:"(14) N Dakota State",   delta:19.4, uScore:3.7,   winner:"Michigan State",score:"92-67" },
+    { fav:"(5) St. John\'s",     dog:"(12) Northern Iowa",    delta:21.6, uScore:-23.9, winner:"St. John\'s",  score:"79-53" },
+    { fav:"(5) Vanderbilt",       dog:"(12) McNeese",          delta:24.2, uScore:-0.8,  winner:"Vanderbilt",    score:"78-68" },
+    { fav:"(4) Alabama",          dog:"(13) Hofstra",          delta:28.4, uScore:-18.6, winner:"Alabama",       score:"90-70" },
+    { fav:"(4) Kansas",           dog:"(13) Cal Baptist",      delta:28.6, uScore:2.2,   winner:"Kansas",        score:"68-60" },
+    { fav:"(4) Nebraska",         dog:"(13) Troy",             delta:33.8, uScore:0.7,   winner:"Nebraska",      score:"76-47" },
+    { fav:"(3) Gonzaga",          dog:"(14) Kennesaw State",   delta:34.6, uScore:3.6,   winner:"Gonzaga",       score:"73-64" },
+    { fav:"(2) UConn",            dog:"(15) Furman",           delta:34.9, uScore:-10.4, winner:"UConn",         score:"82-71" },
+    { fav:"(3) Virginia",         dog:"(14) Wright State",     delta:35.1, uScore:-9.0,  winner:"Virginia",      score:"82-73" },
+    { fav:"(4) Arkansas",         dog:"(13) Hawai\'i",        delta:39.8, uScore:-10.2, winner:"Arkansas",      score:"97-78" },
+    { fav:"(3) Illinois",         dog:"(14) Penn",             delta:41.6, uScore:-6.1,  winner:"Illinois",      score:"105-70" },
+    { fav:"(2) Houston",          dog:"(15) Idaho",            delta:42.3, uScore:-7.6,  winner:"Houston",       score:"78-47" },
+    { fav:"(2) Purdue",           dog:"(15) Queens",           delta:45.7, uScore:1.4,   winner:"Purdue",        score:"104-71" },
+    { fav:"(2) Iowa State",       dog:"(15) Tenn. State",      delta:54.9, uScore:-8.9,  winner:"Iowa State",    score:"108-74" },
+    { fav:"(1) Arizona",          dog:"(16) Long Island",      delta:62.1, uScore:-15.0, winner:"Arizona",       score:"92-58" },
+    { fav:"(1) Duke",             dog:"(16) Siena",            delta:63.1, uScore:-24.3, winner:"Duke",          score:"71-65" },
+  ].map(g => {
+    // Upset = higher seed number (worse seed) won. fav is defined as the lower seed / betting favorite.
+    const favSeed = parseInt(g.fav.match(/\((\d+)\)/)?.[1] ?? "0");
+    const dogSeed = parseInt(g.dog.match(/\((\d+)\)/)?.[1] ?? "99");
+    // Extract team name after "(N) "
+    const favName = g.fav.replace(/^\(\d+\) /, "");
+    const upset = favSeed < dogSeed
+      ? g.winner !== favName   // normal case: fav is lower seed, upset if dog won
+      : g.winner === g.dog.replace(/^\(\d+\) /, ""); // inverted: dog is actually lower seed
+    return { ...g, upset };
+  });
 
   const upsets = ALL_GAMES.filter(g => g.upset);
   const display = showAll ? ALL_GAMES : upsets;
