@@ -1404,7 +1404,7 @@ function useTournament() {
 
 function PicksTab({ onTeamClick, scores, odds }) {
   const [sortBy,       setSortBy]      = useState("time");
-  const [hideFinished, setHideFinished] = useState(true);
+  const [hideFinished, setHideFinished] = useState(false);
   const [filterRegion, setFilterRegion] = useState("All");
   const [filterTier, setFilterTier]   = useState("All");
   const [filterRound,  setFilterRound]  = useState("All");
@@ -1545,6 +1545,11 @@ function PicksTab({ onTeamClick, scores, odds }) {
       </div>
 
       {/* Matchup cards */}
+      {filtered.length === 0 && (
+        <div style={{ textAlign:"center", padding:"3rem 1rem", color:"var(--color-text-tertiary)", fontSize:13, border:"0.5px solid var(--color-border-tertiary)", borderRadius:"var(--border-radius-lg)" }}>
+          No matchups match the current filters.{hideFinished && " Try turning off \"Hide finished\" to see completed games."}
+        </div>
+      )}
       <div style={{ display:"flex", flexDirection:"column", gap:"0.75rem" }}>
         {filtered.map((m,i) => {
           const tm   = TIER_META[m.tier];
