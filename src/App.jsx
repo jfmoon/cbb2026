@@ -1806,40 +1806,64 @@ function RegionBracket({ regionData, scores, onTeamClick, view }) {
 // Keyed by round, then by "Winner" name John picked
 const JOHN_PICKS = {
   R64: {
-    // Correct picks
+    // John's correct R64 picks
     "Duke": true, "Iowa": true, "St. John's": true, "Kansas": true,
     "Louisville": true, "Michigan State": true, "UCLA": true, "UConn": true,
     "Arizona": true, "Arkansas": true, "Gonzaga": true, "Purdue": true,
     "Florida": true, "VCU": true, "Illinois": true, "Texas A&M": true,
     "Houston": true, "Michigan": true, "Saint Louis": true, "Alabama": true,
     "Tennessee": true, "Virginia": true, "Iowa State": true,
-    // Misses — John picked these but they lost
+    "Utah State": true, "Vanderbilt": true, "Nebraska": true, "Miami (FL)": true,
+    // John's wrong R64 picks (picked these, they lost)
     "Wisconsin": false,   // High Point won
     "Akron": false,       // Texas Tech won
     "Santa Clara": false, // Kentucky won
+    "Ohio State": false,  // TCU won
+    "BYU": false,         // Texas won
   },
   R32: {
+    // Correct results
     "Duke": true,          // over TCU
-    "St. John's": true,    // over Kansas
-    "Louisville": true,    // over Michigan State (pick)
-    "UCLA": true,          // over UConn (pick)
-    "Arizona": true,       // over Utah State
-    "Arkansas": true,      // over High Point
-    "Gonzaga": true,       // over Texas
-    "Purdue": true,        // over Miami FL
-    "Florida": true,       // over Iowa
-    "Vanderbilt": true,    // over Nebraska (pick)
     "Illinois": true,      // over VCU
     "Houston": true,       // over Texas A&M
     "Michigan": true,      // over Saint Louis
-    "Alabama": true,       // over Texas Tech (pick)
+    "Arkansas": true,      // over High Point
     "Iowa State": true,    // over Kentucky
-    "Virginia": true,      // over Tennessee (pick)
+    "Arizona": true,       // over Utah State
+    "Florida": true,       // over Iowa
+    // Pending/wrong picks
+    "St. John's": true,    // over Kansas — pending
+    "Louisville": true,    // over Michigan St — MSU won (wrong pick)
+    "UCLA": true,          // over UConn — UConn won (wrong pick)
+    "Vanderbilt": true,    // over Nebraska — Nebraska won (wrong pick)
+    "Gonzaga": true,       // over Texas
+    "Purdue": true,        // over Miami FL
+    "Alabama": true,       // over Texas Tech
+    "Virginia": true,      // over Tennessee
   },
-  S16: {}, // TBD — will add after games play
-  E8:  {},
-  F4:  {},
-  NCG: { "Duke": true },  // Championship pick
+  S16: {
+    "Duke": true,          // over St. John's (East)
+    "Louisville": true,    // over UCLA (East — John's pick)
+    "Vanderbilt": true,    // over Florida (South)
+    "Illinois": true,      // over Houston (South)
+    "Arizona": true,       // over Arkansas (West)
+    "Purdue": true,        // over Gonzaga (West)
+    "Michigan": true,      // over Alabama (Midwest)
+    "Iowa State": true,    // over Virginia (Midwest)
+  },
+  E8: {
+    "Duke": true,          // over Louisville (East)
+    "Illinois": true,      // over Vanderbilt (South)
+    "Arizona": true,       // over Purdue (West)
+    "Iowa State": true,    // over Michigan (Midwest)
+  },
+  F4: {
+    "Duke": true,          // over Illinois (East vs South)
+    "Arizona": true,       // over Iowa State (West vs Midwest)
+  },
+  NCG: {
+    "Duke": true,          // Champion — Duke over Arizona
+  },
 };
 
 // Map round label → JOHN_PICKS key
@@ -1932,8 +1956,8 @@ function BracketTab({ onTeamClick }) {
             <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-primary)", marginRight: 4 }}>My picks:</span>
             <span style={chipStyle("#166534")}>R64: {r64Correct}/{r64Picks.length} correct</span>
             <span style={chipStyle("#dc2626")}>Missed: {r64Wrong}</span>
-            <span style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>R32: {r32Total} picks tracked · S16+ pending</span>
-            <span style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600, marginLeft: "auto" }}>🏆 Pick: Duke</span>
+            <span style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>R32 · S16 · E8 · F4 all tracked</span>
+            <span style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600, marginLeft: "auto" }}>🏆 Duke over Arizona</span>
           </div>
         );
       })()}
